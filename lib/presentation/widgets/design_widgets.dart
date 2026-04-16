@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
-
-class UiPalette {
-  static const primary = Color(0xFF00B14F);
-  static const primarySoft = Color(0xFFE7F8EE);
-  static const border = Color(0xFFE7ECF1);
-  static const textDark = Color(0xFF172B4D);
-  static const textMuted = Color(0xFF6B778C);
-}
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shimmer/shimmer.dart';
+import '../theme/ui_palette.dart';
 
 class MemberAvatar extends StatelessWidget {
   const MemberAvatar({super.key, required this.name, required this.role});
@@ -131,40 +126,57 @@ class _QuickAction extends StatelessWidget {
 }
 
 class MiniStat extends StatelessWidget {
-  const MiniStat({super.key, required this.title, required this.value});
+  const MiniStat({
+    super.key, 
+    required this.title, 
+    required this.value,
+    this.icon,
+    this.iconColor = UiPalette.primary,
+    this.iconBg = UiPalette.primarySoft,
+  });
 
   final String title;
   final String value;
+  final Widget? icon;
+  final Color iconColor;
+  final Color iconBg;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: UiPalette.border),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(color: UiPalette.shadow, blurRadius: 20, offset: Offset(0, 4)),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(color: UiPalette.primarySoft, borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.trending_up, size: 14, color: UiPalette.primary),
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: Text(title, style: const TextStyle(color: UiPalette.textMuted, fontSize: 12))),
-              ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
+            child: Center(
+              child: icon ?? Icon(Icons.trending_up, size: 16, color: iconColor),
             ),
-            const Spacer(),
-            Text(value, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 21, color: UiPalette.textDark)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value, 
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title, 
+            style: const TextStyle(color: UiPalette.textMuted, fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ],
       ),
     );
   }
@@ -239,40 +251,6 @@ class SectionCard extends StatelessWidget {
   }
 }
 
-class ChartPlaceholder extends StatelessWidget {
-  const ChartPlaceholder({super.key, this.bars = false});
-
-  final bool bars;
-
-  @override
-  Widget build(BuildContext context) {
-    final heights = bars
-        ? <double>[32, 46, 38, 64, 76, 88, 108]
-        : <double>[42, 54, 66, 58, 84, 96, 112];
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FCFA),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: UiPalette.border),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: heights.map((h) {
-          return Container(
-            width: 18,
-            height: h,
-            decoration: BoxDecoration(
-              color: bars ? UiPalette.primary.withValues(alpha: 0.85) : UiPalette.primarySoft,
-              borderRadius: BorderRadius.circular(6),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
 
 class RecentOrdersList extends StatelessWidget {
   const RecentOrdersList({super.key});
@@ -341,191 +319,48 @@ class OrderRow extends StatelessWidget {
   }
 }
 
-class StatusPill extends StatelessWidget {
-  const StatusPill({super.key, required this.text});
 
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    Color bg = const Color(0xFFFFF6E6);
-    Color fg = const Color(0xFFB76A00);
-    if (text.contains('Đang giao')) {
-      bg = const Color(0xFFEAF4FF);
-      fg = const Color(0xFF1565C0);
-    } else if (text.contains('Hoàn thành') || text.contains('Đã giao')) {
-      bg = const Color(0xFFE7F8EE);
-      fg = const Color(0xFF008A3E);
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
-      child: Text(text, style: TextStyle(color: fg, fontSize: 12, fontWeight: FontWeight.w700)),
-    );
-  }
-}
-
-class OrderCard extends StatelessWidget {
-  const OrderCard({super.key, required this.orderCode, required this.state});
-
-  final String orderCode;
-  final String state;
-
-  @override
-  Widget build(BuildContext context) {
-    final isPending = state == 'Chờ xác nhận';
-    final isShipping = state == 'Đang giao';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: UiPalette.border),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Text(orderCode, style: const TextStyle(fontWeight: FontWeight.w800)),
-                const Spacer(),
-                StatusPill(text: state),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const ListTile(leading: Icon(Icons.person), title: Text('Nguyễn Văn A'), subtitle: Text('0901 234 567 • Quận 1, TP.HCM')),
-            const ListTile(leading: Icon(Icons.inventory_2), title: Text('Sản phẩm'), subtitle: Text('Nước mắm Phú Quốc x2')),
-            Row(
-              children: [
-                const Expanded(child: Text('Thanh toán (COD)\n₫500,000', style: TextStyle(fontWeight: FontWeight.w800))),
-                if (isPending) ...[
-                  OutlinedButton(onPressed: () {}, child: const Text('Từ chối')),
-                  const SizedBox(width: 8),
-                  FilledButton(onPressed: () {}, child: const Text('Xác nhận')),
-                ] else if (isShipping)
-                  FilledButton(onPressed: () {}, child: const Text('Đã giao thành công'))
-                else
-                  TextButton(onPressed: () {}, child: const Text('Chi tiết')),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class CategoryChip extends StatelessWidget {
-  const CategoryChip(this.label, this.active, {super.key});
-
-  final String label;
-  final bool active;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(
-          label,
-          style: TextStyle(color: active ? Colors.white : UiPalette.textMuted, fontWeight: FontWeight.w700),
-        ),
-        selected: active,
-        selectedColor: UiPalette.primary,
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: UiPalette.border),
-        ),
-        onSelected: (_) {},
-      ),
-    );
-  }
-}
 
 class ProductData {
-  const ProductData(this.name, this.category, this.price, this.stock);
+  const ProductData(this.name, this.category, this.price, this.stock, [this.imageUrl]);
 
   final String name;
   final String category;
   final String price;
   final int stock;
+  final String? imageUrl;
 }
 
-class ProductCard extends StatelessWidget {
-  const ProductCard({super.key, required this.data});
 
-  final ProductData data;
+class ShimmerLoading extends StatelessWidget {
+  const ShimmerLoading({super.key, required this.width, required this.height, this.borderRadius = 12});
+
+  final double width;
+  final double height;
+  final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: UiPalette.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-                    gradient: LinearGradient(colors: [Color(0xFFF2FAF5), Colors.white]),
-                  ),
-                  child: const Center(child: Icon(Icons.image, size: 54, color: UiPalette.primary)),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(color: UiPalette.primarySoft, borderRadius: BorderRadius.circular(999)),
-                    child: Text(
-                      '${data.stock}',
-                      style: const TextStyle(color: UiPalette.primary, fontWeight: FontWeight.w700, fontSize: 11),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(data.category, style: const TextStyle(color: UiPalette.textMuted, fontSize: 12)),
-                const SizedBox(height: 2),
-                Text(data.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(data.price, style: const TextStyle(fontWeight: FontWeight.w800, color: UiPalette.primary)),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: UiPalette.border),
-                          foregroundColor: UiPalette.textDark,
-                        ),
-                        onPressed: () {},
-                        icon: const Icon(Icons.edit, size: 16),
-                        label: const Text('Sửa'),
-                      ),
-                    ),
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.delete_outline)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(borderRadius),
+        ),
       ),
     );
+  }
+}
+
+// Extension to easily add premium animation to any widget
+extension PremiumAnimation on Widget {
+  Widget animateIn({int delayMs = 0}) {
+    return animate(delay: delayMs.ms)
+        .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+        .slideY(begin: 0.1, end: 0, duration: 400.ms, curve: Curves.easeOut);
   }
 }

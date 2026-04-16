@@ -8,12 +8,14 @@ class AppController extends ChangeNotifier {
   String _productSearch = '';
   String _productCategory = 'Tất cả';
   OrderStatus _orderFilter = OrderStatus.pending;
+  User? _user;
 
   bool get isAuthenticated => _isAuthenticated;
   int get tabIndex => _tabIndex;
   String get productSearch => _productSearch;
   String get productCategory => _productCategory;
   OrderStatus get orderFilter => _orderFilter;
+  User? get user => _user;
 
   final List<Product> _products = [
     Product(id: 'p1', name: 'Nước mắm Phú Quốc', category: 'Gia vị', price: 250000, stock: 45),
@@ -79,6 +81,7 @@ class AppController extends ChangeNotifier {
 
   void login() {
     _isAuthenticated = true;
+    _user = User(id: 'u1', name: 'Nguyễn Nhật Thiên', email: 'admin@dacsanviet.vn');
     notifyListeners();
   }
 

@@ -36,6 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   google_fonts: ^6.3.0
   flutter_svg: ^2.2.0
+  flutter_animate: ^4.5.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

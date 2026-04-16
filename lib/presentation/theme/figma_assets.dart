@@ -34,4 +34,3 @@ class FigmaAssets {
   static const navUser = 'assets/figma/nav_user.svg';
   static const navBox = 'assets/figma/nav_box.svg';
 }
-

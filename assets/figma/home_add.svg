@@ -1,6 +1,6 @@
 <svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 19.9921 19.9921" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="Icon">
-<path id="Vector" d="M4.16502 9.99605H15.8271" stroke="var(--stroke-0, #00B14F)" stroke-width="2.08251" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_2" d="M9.99605 4.16502V15.8271" stroke="var(--stroke-0, #00B14F)" stroke-width="2.08251" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector" d="M4.16502 9.99605H15.8271" stroke="#00B14F" stroke-width="2.08251" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M9.99605 4.16502V15.8271" stroke="#00B14F" stroke-width="2.08251" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </svg>

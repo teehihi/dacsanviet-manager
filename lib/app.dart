@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'presentation/theme/ui_palette.dart';
 import 'presentation/app_root.dart';
-import 'presentation/widgets/design_widgets.dart';
 
 class DacSanVietManagerApp extends StatelessWidget {
   const DacSanVietManagerApp({super.key});
@@ -23,9 +23,16 @@ class DacSanVietManagerApp extends StatelessWidget {
         );
       },
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00B14F)),
-        scaffoldBackgroundColor: const Color(0xFFF6F8FA),
-        textTheme: GoogleFonts.dmSansTextTheme().apply(
+        colorScheme: ColorScheme.fromSeed(seedColor: UiPalette.primary),
+        scaffoldBackgroundColor: UiPalette.background,
+        textTheme: GoogleFonts.dmSansTextTheme().copyWith(
+          displayLarge: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+          displayMedium: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+          displaySmall: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+          headlineLarge: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+          headlineMedium: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+          titleLarge: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, color: UiPalette.textDark),
+        ).apply(
           bodyColor: UiPalette.textDark,
           displayColor: UiPalette.textDark,
         ),
@@ -33,25 +40,25 @@ class DacSanVietManagerApp extends StatelessWidget {
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: const BorderSide(color: UiPalette.border),
+            side: BorderSide(color: UiPalette.border),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          hintStyle: const TextStyle(color: UiPalette.textMuted),
+          hintStyle: TextStyle(color: UiPalette.textMuted),
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: UiPalette.border),
+            borderSide: BorderSide(color: UiPalette.border),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: UiPalette.border),
+            borderSide: BorderSide(color: UiPalette.border),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: UiPalette.primary, width: 1.2),
+            borderSide: BorderSide(color: UiPalette.primary, width: 1.2),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(

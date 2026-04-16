@@ -1,6 +1,10 @@
+import "../theme/ui_palette.dart";
 import 'package:flutter/material.dart';
 
 import '../widgets/design_widgets.dart';
+import '../widgets/figma/product_card.dart';
+import '../widgets/figma/order_card.dart';
+import '../widgets/figma/loading_widgets.dart';
 
 class SplashDesignScreen extends StatelessWidget {
   const SplashDesignScreen({super.key});
@@ -150,7 +154,15 @@ class OrderDesignScreen extends StatelessWidget {
         const SizedBox(height: 10),
         const OrderStateDesignScreen(compact: true),
         const SizedBox(height: 10),
-        ...entries.map((e) => OrderCard(orderCode: e, state: state)),
+        ...entries.map((e) => OrderCard(
+          orderCode: e, 
+          state: state,
+          customerName: 'Khách hàng mẫu',
+          phone: '0901 234 567',
+          address: 'TP. Hồ Chí Minh',
+          productSummary: 'Sản phẩm mẫu x1',
+          totalAmount: 250000,
+        )),
       ],
     );
   }
