@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 import '../domain/models.dart';
+import '../domain/domain.dart';
 
 class AppController extends ChangeNotifier {
   bool _isAuthenticated = false;
@@ -9,6 +12,8 @@ class AppController extends ChangeNotifier {
   String _productCategory = 'Tất cả';
   OrderStatus _orderFilter = OrderStatus.pending;
   User? _user;
+  bool _isLoading = false;
+  String? _error;
 
   bool get isAuthenticated => _isAuthenticated;
   int get tabIndex => _tabIndex;
@@ -16,78 +21,199 @@ class AppController extends ChangeNotifier {
   String get productCategory => _productCategory;
   OrderStatus get orderFilter => _orderFilter;
   User? get user => _user;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
 
-  final List<Product> _products = [
-    Product(id: 'p1', name: 'Nước mắm Phú Quốc', category: 'Gia vị', price: 250000, stock: 45),
-    Product(id: 'p2', name: 'Cà phê Buôn Ma Thuột', category: 'Đồ uống', price: 180000, stock: 32),
-    Product(id: 'p3', name: 'Bánh pía Sóc Trăng', category: 'Bánh kẹo', price: 120000, stock: 28),
-    Product(id: 'p4', name: 'Mứt dừa Bến Tre', category: 'Bánh kẹo', price: 95000, stock: 56),
-    Product(id: 'p5', name: 'Tôm khô Cà Mau', category: 'Hải sản', price: 280000, stock: 24),
-  ];
-
-  final List<Order> _orders = [
-    Order(
-      id: 'o1',
-      code: 'DH-2456',
-      customerName: 'Nguyễn Văn A',
-      phone: '0901 234 567',
-      address: 'Quận 1, TP.HCM',
-      productSummary: 'Nước mắm Phú Quốc x2',
-      totalAmount: 500000,
-      paymentMethod: 'COD',
-      status: OrderStatus.pending,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 10)),
-    ),
-    Order(
-      id: 'o2',
-      code: 'DH-2457',
-      customerName: 'Trần Thị B',
-      phone: '0912 345 678',
-      address: 'Quận 3, TP.HCM',
-      productSummary: 'Cà phê Buôn Ma Thuột x1',
-      totalAmount: 180000,
-      paymentMethod: 'ZaloPay',
-      status: OrderStatus.pending,
-      createdAt: DateTime.now().subtract(const Duration(minutes: 25)),
-    ),
-    Order(
-      id: 'o3',
-      code: 'DH-2455',
-      customerName: 'Phạm Thị D',
-      phone: '0934 567 890',
-      address: 'Quận 2, TP.HCM',
-      productSummary: 'Mứt dừa Bến Tre x2',
-      totalAmount: 190000,
-      paymentMethod: 'Momo',
-      status: OrderStatus.shipping,
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Order(
-      id: 'o4',
-      code: 'DH-2453',
-      customerName: 'Võ Thị F',
-      phone: '0956 789 012',
-      address: 'Quận 4, TP.HCM',
-      productSummary: 'Tôm khô Cà Mau x2',
-      totalAmount: 560000,
-      paymentMethod: 'VNPay',
-      status: OrderStatus.complete,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-  ];
+  List<Product> _products = [];
+  List<Order> _orders = [];
+  int _totalRevenue = 0;
+  int _totalOrders = 0;
+  int _totalProducts = 0;
 
   List<Product> get products => List.unmodifiable(_products);
   List<Order> get orders => List.unmodifiable(_orders);
 
-  void login() {
-    _isAuthenticated = true;
-    _user = User(id: 'u1', name: 'Nguyễn Nhật Thiên', email: 'admin@dacsanviet.vn');
+  Future<bool> login(String email, String password) async {
+    if (_isLoading) {
+      debugPrint('⚠️ Login already in progress, skipping...');
+      return false;
+    }
+    
+    _isLoading = true;
+    _error = null;
     notifyListeners();
+
+    try {
+      debugPrint('🔐 Attempting login...');
+      final response = await AuthService.login(email: email, password: password);
+      
+      if (response.success && response.data != null) {
+        final userData = response.data!['user'];
+        _isAuthenticated = true;
+        _user = User(
+          id: userData['id'].toString(),
+          name: userData['full_name'] ?? userData['username'],
+          email: userData['email'],
+        );
+        
+        debugPrint('✅ Login successful, loading data...');
+        
+        // Load initial data
+        await Future.wait([
+          loadProducts(),
+          loadOrders(),
+        ]);
+        
+        _isLoading = false;
+        notifyListeners();
+        debugPrint('✅ All data loaded successfully');
+        return true;
+      } else {
+        _error = response.message;
+        _isLoading = false;
+        notifyListeners();
+        debugPrint('❌ Login failed: ${response.message}');
+        return false;
+      }
+    } catch (e) {
+      _error = 'Lỗi kết nối: $e';
+      _isLoading = false;
+      notifyListeners();
+      debugPrint('❌ Login error: $e');
+      return false;
+    }
   }
 
-  void logout() {
+  Future<void> loadProducts() async {
+    try {
+      debugPrint('Loading products...');
+      // Use public products endpoint
+      final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.products}')
+          .replace(queryParameters: {'limit': '100'});
+      
+      final response = await http.get(uri, headers: ApiConfig.defaultHeaders)
+          .timeout(ApiConfig.connectionTimeout);
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonData = jsonDecode(response.body);
+        
+        // Check if response has success field
+        if (jsonData is Map && jsonData['success'] == true) {
+          final productsData = jsonData['data'] as List;
+          
+          _products = productsData.map((p) => Product(
+            id: p['id'].toString(),
+            name: p['name'] ?? '',
+            category: p['category'] ?? 'Khác',
+            price: (p['price'] is int) ? p['price'] : (p['price'] as double).toInt(),
+            stock: p['stock'] ?? 0,
+            imageUrl: p['imageUrl'] ?? p['image_url'],
+          )).toList();
+          
+          if (jsonData['pagination'] != null) {
+            _totalProducts = jsonData['pagination']['totalItems'] ?? _products.length;
+          } else {
+            _totalProducts = _products.length;
+          }
+          
+          debugPrint('✅ Loaded ${_products.length} products');
+        } else {
+          debugPrint('❌ Invalid response format');
+        }
+      } else {
+        debugPrint('❌ HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading products: $e');
+    }
+  }
+
+  Future<void> loadOrders() async {
+    try {
+      debugPrint('Loading orders...');
+      // Orders endpoint requires authentication, use session ID
+      final sessionId = ApiService.sessionId;
+      if (sessionId == null) {
+        debugPrint('⚠️ No session ID, skipping orders');
+        return;
+      }
+      
+      // Use /all endpoint for admin to see all orders
+      final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.orders}/all')
+          .replace(queryParameters: {'limit': '100'});
+      
+      final response = await http.get(
+        uri,
+        headers: ApiConfig.getAuthHeaders(sessionId),
+      ).timeout(ApiConfig.connectionTimeout);
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final jsonData = jsonDecode(response.body);
+        
+        if (jsonData is Map && jsonData['success'] == true) {
+          final ordersData = jsonData['data'] as List? ?? [];
+          
+          _orders = ordersData.map((o) {
+            // Parse status
+            OrderStatus status;
+            final statusStr = o['status']?.toString().toUpperCase() ?? 'NEW';
+            if (statusStr == 'NEW' || statusStr == 'PENDING') {
+              status = OrderStatus.pending;
+            } else if (statusStr == 'CONFIRMED' || statusStr == 'SHIPPING') {
+              status = OrderStatus.shipping;
+            } else {
+              status = OrderStatus.complete;
+            }
+
+            // Parse items for product summary
+            String productSummary = '';
+            if (o['items'] != null && o['items'] is List) {
+              final items = o['items'] as List;
+              productSummary = items.map((item) => '${item['product_name'] ?? 'Sản phẩm'} x${item['quantity'] ?? 1}').join(', ');
+            }
+
+            return Order(
+              id: o['id'].toString(),
+              code: o['order_number'] ?? 'ORD-${o['id']}',
+              customerName: o['customer_name'] ?? o['customerName'] ?? 'Khách hàng',
+              phone: o['phone'] ?? '',
+              address: o['shipping_address'] ?? o['shippingAddress'] ?? '',
+              productSummary: productSummary.isNotEmpty ? productSummary : 'Đơn hàng',
+              totalAmount: (o['total_amount'] ?? o['totalAmount'] ?? 0) is int 
+                  ? (o['total_amount'] ?? o['totalAmount'] ?? 0)
+                  : ((o['total_amount'] ?? o['totalAmount'] ?? 0) as double).toInt(),
+              paymentMethod: o['payment_method'] ?? o['paymentMethod'] ?? 'COD',
+              status: status,
+              createdAt: DateTime.tryParse(o['created_at'] ?? o['createdAt'] ?? '') ?? DateTime.now(),
+            );
+          }).toList();
+          
+          if (jsonData['pagination'] != null) {
+            _totalOrders = jsonData['pagination']['totalItems'] ?? _orders.length;
+          } else {
+            _totalOrders = _orders.length;
+          }
+          
+          _totalRevenue = _orders.fold(0, (sum, o) => sum + o.totalAmount);
+          debugPrint('✅ Loaded ${_orders.length} orders');
+        } else {
+          debugPrint('❌ Invalid response format');
+        }
+      } else {
+        debugPrint('❌ HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading orders: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    await AuthService.logout();
     _isAuthenticated = false;
     _tabIndex = 0;
+    _products = [];
+    _orders = [];
+    _user = null;
     notifyListeners();
   }
 
@@ -114,40 +240,79 @@ class AppController extends ChangeNotifier {
     }).toList();
   }
 
-  void addProduct({
+  Future<void> addProduct({
     required String name,
     required String category,
     required int price,
     required int stock,
     String? imageUrl,
-  }) {
-    final id = 'p${DateTime.now().microsecondsSinceEpoch}';
-    _products.insert(0, Product(id: id, name: name, category: category, price: price, stock: stock, imageUrl: imageUrl));
-    notifyListeners();
+  }) async {
+    try {
+      final response = await ProductService.createProduct(
+        name: name,
+        description: name,
+        price: price.toDouble(),
+        stock: stock,
+        category: category,
+        imageUrl: imageUrl,
+      );
+      
+      if (response.success) {
+        await loadProducts();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi tạo sản phẩm: $e';
+      notifyListeners();
+    }
   }
 
-  void updateProduct(
+  Future<void> updateProduct(
     String id, {
     required String name,
     required String category,
     required int price,
     required int stock,
     String? imageUrl,
-  }) {
-    final i = _products.indexWhere((p) => p.id == id);
-    if (i < 0) return;
-    _products[i]
-      ..name = name
-      ..category = category
-      ..price = price
-      ..stock = stock
-      ..imageUrl = imageUrl;
-    notifyListeners();
+  }) async {
+    try {
+      final response = await ProductService.updateProduct(
+        id: int.parse(id),
+        name: name,
+        price: price.toDouble(),
+        stock: stock,
+        category: category,
+        imageUrl: imageUrl,
+      );
+      
+      if (response.success) {
+        await loadProducts();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi cập nhật sản phẩm: $e';
+      notifyListeners();
+    }
   }
 
-  void deleteProduct(String id) {
-    _products.removeWhere((p) => p.id == id);
-    notifyListeners();
+  Future<void> deleteProduct(String id) async {
+    try {
+      final response = await ProductService.deleteProduct(int.parse(id));
+      
+      if (response.success) {
+        await loadProducts();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi xóa sản phẩm: $e';
+      notifyListeners();
+    }
   }
 
   void setOrderFilter(OrderStatus status) {
@@ -157,27 +322,68 @@ class AppController extends ChangeNotifier {
 
   List<Order> get filteredOrders => _orders.where((o) => o.status == _orderFilter).toList();
 
-  void rejectOrder(String id) {
-    _orders.removeWhere((o) => o.id == id);
-    notifyListeners();
+  Future<void> rejectOrder(String id) async {
+    try {
+      final order = _orders.firstWhere((o) => o.id == id);
+      final response = await OrderService.updateOrderStatus(
+        orderId: order.code,
+        status: 'CANCELLED',
+      );
+      
+      if (response.success) {
+        await loadOrders();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi hủy đơn hàng: $e';
+      notifyListeners();
+    }
   }
 
-  void confirmOrder(String id) {
-    final order = _orders.where((o) => o.id == id).firstOrNull;
-    if (order == null) return;
-    order.status = OrderStatus.shipping;
-    notifyListeners();
+  Future<void> confirmOrder(String id) async {
+    try {
+      final order = _orders.firstWhere((o) => o.id == id);
+      final response = await OrderService.updateOrderStatus(
+        orderId: order.code,
+        status: 'CONFIRMED',
+      );
+      
+      if (response.success) {
+        await loadOrders();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi xác nhận đơn hàng: $e';
+      notifyListeners();
+    }
   }
 
-  void completeOrder(String id) {
-    final order = _orders.where((o) => o.id == id).firstOrNull;
-    if (order == null) return;
-    order.status = OrderStatus.complete;
-    notifyListeners();
+  Future<void> completeOrder(String id) async {
+    try {
+      final order = _orders.firstWhere((o) => o.id == id);
+      final response = await OrderService.updateOrderStatus(
+        orderId: order.code,
+        status: 'DELIVERED',
+      );
+      
+      if (response.success) {
+        await loadOrders();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi hoàn thành đơn hàng: $e';
+      notifyListeners();
+    }
   }
 
-  int get totalOrders => _orders.length;
-  int get totalProducts => _products.length;
-  int get totalRevenue => _orders.fold(0, (sum, o) => sum + o.totalAmount);
+  int get totalOrders => _totalOrders;
+  int get totalProducts => _totalProducts;
+  int get totalRevenue => _totalRevenue;
   int get totalCustomers => _orders.map((o) => o.phone).toSet().length;
 }

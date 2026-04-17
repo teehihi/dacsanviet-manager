@@ -14,9 +14,35 @@ class FigmaLoginScreen extends StatefulWidget {
 }
 
 class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
-  final email = TextEditingController(text: 'admin@dacsanviet.vn');
-  final password = TextEditingController(text: '12345678');
+  final email = TextEditingController(text: 'admin@dacsanviet.com');
+  final password = TextEditingController(text: 'admin123');
   bool obscure = true;
+  bool isLoading = false;
+  String? errorMessage;
+
+  Future<void> _handleLogin() async {
+    if (email.text.isEmpty || password.text.isEmpty) {
+      setState(() {
+        errorMessage = 'Vui lòng nhập email và mật khẩu';
+      });
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      // Call the onLogin callback which should handle the actual login
+      widget.onLogin();
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Đăng nhập thất bại: $e';
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,31 +137,65 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          if (errorMessage != null)
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage!,
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 13,
+                                        color: Colors.red.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (errorMessage != null) const SizedBox(height: 12),
                           SizedBox(
                             width: double.infinity,
                             height: 60,
                             child: ElevatedButton(
-                              onPressed: widget.onLogin,
+                              onPressed: isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: UiPalette.primary,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                                 elevation: 0,
+                                disabledBackgroundColor: UiPalette.primary.withValues(alpha: 0.5),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Đăng nhập',
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
+                              child: isLoading
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Đăng nhập',
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SvgPicture.asset(FigmaAssets.loginArrow, width: 20, height: 20),
+                                      ],
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  SvgPicture.asset(FigmaAssets.loginArrow, width: 20, height: 20),
-                                ],
-                              ),
                             ),
                           ),
                         ],

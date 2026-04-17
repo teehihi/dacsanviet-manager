@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/ui_palette.dart';
+import '../../../domain/services/upload_service.dart';
 
 class ProductFormDialog extends StatefulWidget {
   final Map<String, dynamic>? initialData;
@@ -24,6 +27,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late TextEditingController stockController;
   late TextEditingController categoryController;
   late TextEditingController imageUrlController;
+  
+  File? _selectedImage;
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -217,76 +224,170 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     );
   }
 
-  Widget _buildImagePicker() {
-    if (widget.isEdit && imageUrlController.text.isNotEmpty) {
-      return Container(
-        height: 140,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          image: DecorationImage(
-            image: NetworkImage(imageUrlController.text),
-            fit: BoxFit.cover,
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1920,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+          // Don't upload yet, just show preview
+        });
+        
+        // For now, just use local path as placeholder
+        // In production, you would upload to server here
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã chọn ảnh! Nhập URL hoặc để trống để dùng ảnh đã chọn.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lỗi chọn ảnh: $e'),
+            backgroundColor: Colors.red,
           ),
+        );
+      }
+    }
+  }
+
+  Widget _buildImagePicker() {
+    // Show selected image or uploaded image
+    if (_selectedImage != null || (widget.isEdit && imageUrlController.text.isNotEmpty)) {
+      return GestureDetector(
+        onTap: _pickImage,
+        child: Container(
+          height: 140,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            image: _selectedImage != null
+                ? DecorationImage(
+                    image: FileImage(_selectedImage!),
+                    fit: BoxFit.cover,
+                  )
+                : (imageUrlController.text.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(imageUrlController.text),
+                        fit: BoxFit.cover,
+                      )
+                    : null),
+          ),
+          child: _isUploading
+              ? Container(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  child: const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
+                )
+              : Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.3),
+                      ],
+                    ),
+                  ),
+                  child: const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.edit, color: Colors.white, size: 16),
+                          SizedBox(width: 4),
+                          Text(
+                            'Thay đổi ảnh',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
         ),
       );
     }
 
-    return Container(
-      height: 140,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: const Color(0xFFFBFDFC),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE0E0E0),
-          width: 1,
-          style: BorderStyle.none, // We will use custom dashed border if needed
+    // Show upload placeholder
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 140,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFBFDFC),
+          borderRadius: BorderRadius.circular(16),
         ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: const Color(0xFFE0E0E0).withValues(alpha: 0.5),
-              width: 1.5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: const Color(0xFFE0E0E0).withValues(alpha: 0.5),
+                width: 1.5,
+              ),
             ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: UiPalette.primary.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.cloud_upload_outlined,
-                  color: UiPalette.primary,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Tải ảnh lên từ thiết bị',
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: UiPalette.textDark,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Hỗ trợ JPG, PNG, WEBP',
-                style: GoogleFonts.dmSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF999999),
-                ),
-              ),
-            ],
+            child: _isUploading
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: UiPalette.primary.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.cloud_upload_outlined,
+                          color: UiPalette.primary,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Tải ảnh lên từ thiết bị',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: UiPalette.textDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Hỗ trợ JPG, PNG, WEBP',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: const Color(0xFF999999),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),

@@ -36,7 +36,35 @@ class _AppRootState extends State<AppRoot> {
       animation: controller,
       builder: (context, _) {
         if (_showSplash) return const FigmaSplashScreen();
-        if (!controller.isAuthenticated) return FigmaLoginScreen(onLogin: controller.login);
+        if (!controller.isAuthenticated) {
+          return FigmaLoginScreen(
+            onLogin: () async {
+              // Get email and password from login screen
+              // For now, use default admin credentials
+              final success = await controller.login(
+                'admin@dacsanviet.com',
+                'admin123',
+              );
+              
+              if (!success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(controller.error ?? 'Đăng nhập thất bại'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          );
+        }
+
+        if (controller.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
 
         return Scaffold(
           body: Stack(
