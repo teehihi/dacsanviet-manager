@@ -4,14 +4,12 @@ import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/product_card.dart';
 import '../widgets/figma/loading_widgets.dart';
+import '../widgets/design_widgets.dart' hide ProductData;
 import '../widgets/figma/product_form_dialog.dart';
 
 class FigmaProductsScreen extends StatelessWidget {
   const FigmaProductsScreen({super.key, required this.controller});
   final AppController controller;
-
-  static const categories = ['Tất cả', 'Gia vị', 'Đồ uống', 'Bánh kẹo', 'Hải sản'];
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -72,7 +70,7 @@ class FigmaProductsScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: categories.map((c) {
+                children: controller.availableCategories.map((c) {
                   final active = controller.productCategory == c;
                   return GestureDetector(
                     onTap: () => controller.setProductCategory(c),

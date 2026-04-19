@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
+import 'users_screen.dart';
 
 class FigmaProfileScreen extends StatelessWidget {
   const FigmaProfileScreen({super.key, required this.controller});
@@ -67,7 +68,7 @@ class FigmaProfileScreen extends StatelessWidget {
                   children: [
                     const SizedBox(height: 40), // Space for avatar
                     Text(
-                      'Nguyễn Nhật Thiên',
+                      controller.user?.fullName ?? 'Nguyễn Nhật Thiên',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
@@ -76,7 +77,7 @@ class FigmaProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Chủ cửa hàng',
+                      controller.user?.role == 'ADMIN' ? 'Quản trị viên' : 'Người dùng',
                       style: GoogleFonts.dmSans(
                         fontSize: 14,
                         color: UiPalette.textMuted,
@@ -180,6 +181,19 @@ class FigmaProfileScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
+                _SettingsItem(
+                  icon: Icons.people_outline_rounded,
+                  label: 'Quản lý người dùng',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FigmaUsersScreen(controller: controller),
+                      ),
+                    );
+                  },
+                ),
+                _buildDivider(),
                 _SettingsItem(
                   icon: Icons.notifications_none_rounded,
                   label: 'Thông báo',

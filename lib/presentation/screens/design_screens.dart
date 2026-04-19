@@ -1,9 +1,11 @@
 import "../theme/ui_palette.dart";
 import 'package:flutter/material.dart';
+import '../../state/app_controller.dart';
 
 import '../widgets/design_widgets.dart';
 import '../widgets/figma/product_card.dart';
 import '../widgets/figma/order_card.dart';
+import '../widgets/figma/home_widgets.dart';
 import '../widgets/figma/loading_widgets.dart';
 
 class SplashDesignScreen extends StatelessWidget {
@@ -168,68 +170,134 @@ class OrderDesignScreen extends StatelessWidget {
   }
 }
 
-class ProductsDesignScreen extends StatelessWidget {
+class ProductsDesignScreen extends StatefulWidget {
   const ProductsDesignScreen({super.key, this.filtered = false});
 
   final bool filtered;
 
   @override
+  State<ProductsDesignScreen> createState() => _ProductsDesignScreenState();
+}
+
+class _ProductsDesignScreenState extends State<ProductsDesignScreen> {
+  final controller = AppController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.loadProducts();
+    if (widget.filtered) {
+      // Simulate filtering for design demo
+      Future.delayed(const Duration(seconds: 1), () {
+        if (controller.availableCategories.length > 1) {
+          controller.setProductSearch('');
+          controller.setProductCategory(controller.availableCategories[1]);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final products = filtered
-        ? const [ProductData('Cà phê Buôn Ma Thuột', 'Đồ uống', '180.000 ₫', 32)]
-        : const [
-            ProductData('Nước mắm Phú Quốc', 'Gia vị', '250.000 ₫', 45),
-            ProductData('Cà phê Buôn Ma Thuột', 'Đồ uống', '180.000 ₫', 32),
-            ProductData('Bánh pía Sóc Trăng', 'Bánh kẹo', '120.000 ₫', 28),
-            ProductData('Mứt dừa Bến Tre', 'Bánh kẹo', '95.000 ₫', 56),
-          ];
-    return Stack(
-      children: [
-        ListView(
-          padding: const EdgeInsets.all(16),
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final products = controller.filteredProducts;
+        final categories = controller.availableCategories;
+
+        return Stack(
           children: [
-            const TopHeader(title: 'Quản Lý Sản phẩm', subtitle: ''),
-            const SizedBox(height: 8),
-            const TextField(decoration: InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Tìm kiếm sản phẩm...')),
-            const SizedBox(height: 10),
-            const SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  CategoryChip('Tất cả', true),
-                  CategoryChip('Gia vị', false),
-                  CategoryChip('Đồ uống', false),
-                  CategoryChip('Bánh kẹo', false),
-                  CategoryChip('Hải sản', false),
-                ],
-              ),
+            ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const TopHeader(title: 'Quản Lý Sản phẩm', subtitle: ''),
+                const SizedBox(height: 8),
+                TextField(
+                  onChanged: controller.setProductSearch,
+                  decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Tìm kiếm sản phẩm...'),
+                ),
+                const SizedBox(height: 10),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: categories.map((c) {
+                      return GestureDetector(
+                        onTap: () => controller.setProductCategory(c),
+                        child: CategoryChip(c, controller.productCategory == c),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (controller.isLoading)
+                  const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator()))
+                else if (products.isEmpty)
+                  const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('Không tìm thấy sản phẩm nào', style: TextStyle(color: Colors.black54))))
+                else
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: products.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.68,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemBuilder: (_, i) {
+                      final p = products[i];
+                      return ProductCard(
+                        data: ProductData(
+                          p.name, 
+                          p.category, 
+                          '${p.price} ₫', 
+                          p.stock,
+                          p.imageUrl
+                        ),
+                      );
+                    },
+                  ),
+              ],
             ),
-            const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: products.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: .6,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+            Positioned(
+              right: 20,
+              bottom: 20,
+              child: FloatingActionButton(
+                backgroundColor: UiPalette.primary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                onPressed: () {},
+                child: const Icon(Icons.add, color: Colors.white),
               ),
-              itemBuilder: (_, i) => ProductCard(data: products[i]),
             ),
           ],
+        );
+      }
+    );
+  }
+}
+
+class CategoryChip extends StatelessWidget {
+  const CategoryChip(this.text, this.active, {super.key});
+  final String text;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: active ? UiPalette.primary : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: active ? UiPalette.primary : UiPalette.border),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: active ? Colors.white : UiPalette.textMuted,
+          fontWeight: FontWeight.w700,
         ),
-        Positioned(
-          right: 20,
-          bottom: 20,
-          child: FloatingActionButton(
-            backgroundColor: UiPalette.primary,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            onPressed: () {},
-            child: const Icon(Icons.add),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

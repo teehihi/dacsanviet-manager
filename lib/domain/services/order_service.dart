@@ -12,7 +12,7 @@ class OrderService {
     String? search,
   }) async {
     return await ApiService.get<Map<String, dynamic>>(
-      ApiConfig.orders,
+      ApiConfig.adminOrders, // Changed to use admin endpoints
       queryParams: {
         'page': page.toString(),
         'limit': limit.toString(),
@@ -36,8 +36,8 @@ class OrderService {
     required String orderId,
     required String status,
   }) async {
-    return await ApiService.put<Map<String, dynamic>>(
-      '${ApiConfig.orders}/$orderId/status',
+    return await ApiService.patch<Map<String, dynamic>>(
+      '${ApiConfig.adminOrders}/$orderId/status',
       body: {
         'status': status,
       },

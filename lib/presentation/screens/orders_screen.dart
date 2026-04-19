@@ -5,6 +5,7 @@ import '../../domain/models.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/order_card.dart';
 import '../widgets/figma/loading_widgets.dart';
+import '../widgets/design_widgets.dart';
 
 class FigmaOrdersScreen extends StatelessWidget {
   const FigmaOrdersScreen({super.key, required this.controller});

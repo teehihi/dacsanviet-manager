@@ -4,6 +4,10 @@ import 'package:http/http.dart' as http;
 
 import '../domain/models.dart';
 import '../domain/domain.dart';
+import '../domain/services/socket_service.dart';
+import '../domain/services/auth_service.dart';
+import '../domain/api_service.dart';
+import '../domain/services/notification_service.dart';
 
 class AppController extends ChangeNotifier {
   bool _isAuthenticated = false;
@@ -29,9 +33,39 @@ class AppController extends ChangeNotifier {
   int _totalRevenue = 0;
   int _totalOrders = 0;
   int _totalProducts = 0;
+  int _totalUsers = 0;
 
   List<Product> get products => List.unmodifiable(_products);
   List<Order> get orders => List.unmodifiable(_orders);
+  
+  List<User> _users = [];
+  List<User> get users => List.unmodifiable(_users);
+
+  // --- Notifications management ---
+  final List<AdminNotification> _notifications = [];
+  List<AdminNotification> get notifications => List.unmodifiable(_notifications.reversed);
+
+  void addNotification(String title, String body, {Map<String, dynamic>? data}) {
+    final notification = AdminNotification(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: title,
+      body: body,
+      timestamp: DateTime.now(),
+      data: data,
+    );
+    _notifications.add(notification);
+    notifyListeners();
+  }
+
+  void removeNotification(String id) {
+    _notifications.removeWhere((n) => n.id == id);
+    notifyListeners();
+  }
+
+  void clearAllNotifications() {
+    _notifications.clear();
+    notifyListeners();
+  }
 
   Future<bool> login(String email, String password) async {
     if (_isLoading) {
@@ -52,16 +86,40 @@ class AppController extends ChangeNotifier {
         _isAuthenticated = true;
         _user = User(
           id: userData['id'].toString(),
-          name: userData['full_name'] ?? userData['username'],
+          fullName: userData['fullName'] ?? userData['username'],
           email: userData['email'],
+          phoneNumber: userData['phone_number'] ?? '',
+          role: userData['role'] ?? 'ADMIN',
+          isActive: true,
         );
         
         debugPrint('✅ Login successful, loading data...');
         
+        // Connect Socket
+        final token = ApiService.sessionId;
+        if (token != null) {
+          SocketService().connect(token);
+          SocketService().onNotificationReceived = (data) {
+            _handleSocketNotification(data);
+          };
+
+          // --- Update FCM Token for Push Notifications ---
+          NotificationService().getFCMToken().then((fcmToken) {
+            if (fcmToken != null) {
+              AuthService.updateFcmToken(fcmToken).then((res) {
+                if (res.success) {
+                  debugPrint('✅ FCM Token updated on server');
+                }
+              });
+            }
+          });
+        }
+
         // Load initial data
         await Future.wait([
           loadProducts(),
           loadOrders(),
+          loadUsers(),
         ]);
         
         _isLoading = false;
@@ -138,8 +196,8 @@ class AppController extends ChangeNotifier {
         return;
       }
       
-      // Use /all endpoint for admin to see all orders
-      final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.orders}/all')
+      // Use Admin API for all orders
+      final uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.apiPrefix}/admin/orders')
           .replace(queryParameters: {'limit': '100'});
       
       final response = await http.get(
@@ -194,7 +252,9 @@ class AppController extends ChangeNotifier {
             _totalOrders = _orders.length;
           }
           
-          _totalRevenue = _orders.fold(0, (sum, o) => sum + o.totalAmount);
+          _totalRevenue = _orders
+              .where((o) => o.status == OrderStatus.complete)
+              .fold(0, (sum, o) => sum + o.totalAmount);
           debugPrint('✅ Loaded ${_orders.length} orders');
         } else {
           debugPrint('❌ Invalid response format');
@@ -208,13 +268,56 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await AuthService.logout();
+    try {
+      await AuthService.logout();
+    } catch (_) {}
+    
+    SocketService().disconnect();
     _isAuthenticated = false;
     _tabIndex = 0;
     _products = [];
     _orders = [];
     _user = null;
     notifyListeners();
+  }
+
+  void _handleSocketNotification(dynamic data) {
+    debugPrint('🔔 System Logic: Processing socket data: $data');
+    
+    // Refresh relevant data based on type
+    if (data is Map) {
+      final type = data['type'];
+      if (type == 'NEW_ORDER' || type == 'ORDER_UPDATED') {
+        loadOrders();
+      } else if (type == 'NEW_USER') {
+        loadUsers();
+      }
+      
+      // Show system notification
+      NotificationService().showLocalNotification(
+        title: data['title'] ?? 'Thông báo hệ thống',
+        body: data['body'] ?? 'Có hoạt động mới trong quản trị.',
+      );
+
+      // Save to internal notifications list
+      addNotification(
+        data['title'] ?? 'Thông báo hệ thống',
+        data['body'] ?? 'Có hoạt động mới trong quản trị.',
+        data: data is Map<String, dynamic> ? data : null,
+      );
+
+      // Notify UI via _error (as a quick snackbar mechanism)
+      _error = 'Thông báo: ${data['title'] ?? 'Cập nhật từ hệ thống'}';
+      notifyListeners();
+      
+      // Clear error after a while
+      Future.delayed(const Duration(seconds: 4), () {
+        if (_error?.startsWith('Thông báo:') ?? false) {
+          _error = null;
+          notifyListeners();
+        }
+      });
+    }
   }
 
   void setTab(int index) {
@@ -230,6 +333,15 @@ class AppController extends ChangeNotifier {
   void setProductCategory(String category) {
     _productCategory = category;
     notifyListeners();
+  }
+
+  // Get dynamic categories from products list
+  List<String> get availableCategories {
+    final Set<String> cats = {'Tất cả'};
+    for (var p in _products) {
+      if (p.category.isNotEmpty) cats.add(p.category);
+    }
+    return cats.toList();
   }
 
   List<Product> get filteredProducts {
@@ -382,8 +494,57 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  Future<void> loadUsers() async {
+    try {
+      debugPrint('Loading users...');
+      final response = await UserService.getUsers(limit: 100);
+      
+      if (response.success && response.data != null) {
+        _users = response.data!;
+        _totalUsers = _users.length;
+        debugPrint('✅ Loaded ${_users.length} users');
+        notifyListeners();
+      } else {
+        debugPrint('❌ Error loading users: ${response.message}');
+      }
+    } catch (e) {
+      debugPrint('❌ Exception loading users: $e');
+    }
+  }
+
+  Future<void> toggleUserStatus(String id) async {
+    try {
+      final response = await UserService.toggleUserStatus(id);
+      if (response.success) {
+        await loadUsers();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi cập nhật trạng thái: $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteUser(String id) async {
+    try {
+      final response = await UserService.deleteUser(id);
+      if (response.success) {
+        await loadUsers();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Lỗi xóa người dùng: $e';
+      notifyListeners();
+    }
+  }
+
   int get totalOrders => _totalOrders;
   int get totalProducts => _totalProducts;
   int get totalRevenue => _totalRevenue;
-  int get totalCustomers => _orders.map((o) => o.phone).toSet().length;
+  int get totalUsers => _totalUsers;
+  int get totalCustomers => _users.where((u) => u.role == 'USER').length;
 }

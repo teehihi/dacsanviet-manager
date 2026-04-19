@@ -108,4 +108,13 @@ class AuthService {
     
     return response;
   }
+
+  /// Update FCM Token for push notifications
+  static Future<ApiResponse<Map<String, dynamic>>> updateFcmToken(String fcmToken) async {
+    return await ApiService.post<Map<String, dynamic>>(
+      '/api/auth/fcm-token',
+      body: { 'fcmToken': fcmToken },
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+  }
 }

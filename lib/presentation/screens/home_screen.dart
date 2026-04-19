@@ -5,11 +5,21 @@ import '../theme/ui_palette.dart';
 import '../theme/figma_assets.dart';
 import '../widgets/figma/home_widgets.dart';
 import '../widgets/figma/common_widgets.dart';
+import '../widgets/figma/notification_sheet.dart';
 import '../../state/app_controller.dart';
 
 class FigmaHomeScreen extends StatelessWidget {
   const FigmaHomeScreen({super.key, required this.controller});
   final AppController controller;
+
+  void _showNotifications(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => NotificationSheet(controller: controller),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +66,7 @@ class FigmaHomeScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${controller.user?.name ?? "Quản trị viên"} 👋',
+                              '${controller.user?.fullName ?? "Quản trị viên"} 👋',
                               style: GoogleFonts.plusJakartaSans(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
@@ -65,7 +75,14 @@ class FigmaHomeScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        _buildHeaderIcon(FigmaAssets.homeBell),
+                        Hero(
+                          tag: 'home_bell',
+                          child: _buildHeaderIcon(
+                            FigmaAssets.homeBell, 
+                            onTap: () => _showNotifications(context),
+                            badge: controller.notifications.length,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -136,14 +153,19 @@ class FigmaHomeScreen extends StatelessWidget {
               children: [
                 const SizedBox(height: 12),
                 ...controller.orders.take(3).map((o) {
-                    final product = controller.products.firstWhere((p) => o.productSummary.contains(p.name), orElse: () => controller.products.first);
+                    final product = controller.products.isEmpty 
+                        ? null 
+                        : controller.products.firstWhere(
+                            (p) => o.productSummary.contains(p.name), 
+                            orElse: () => controller.products.first,
+                          );
                     return OrderHomeItem(
                         name: o.customerName,
                         product: o.productSummary,
                         price: _currencyFull(o.totalAmount),
                         status: o.status.name,
                         orderId: o.code.replaceAll('DH-', ''),
-                        imageUrl: product.imageUrl,
+                        imageUrl: product?.imageUrl,
                     );
                 }),
               ],
@@ -154,16 +176,49 @@ class FigmaHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeaderIcon(String asset) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: SvgPicture.asset(asset, width: 22, colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn)),
+  Widget _buildHeaderIcon(String asset, {VoidCallback? onTap, int badge = 0}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: SvgPicture.asset(asset, width: 22, colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn)),
+            ),
+          ),
+          if (badge > 0)
+            Positioned(
+              right: -4,
+              top: -4,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 18,
+                  minHeight: 18,
+                ),
+                child: Text(
+                  badge > 9 ? '9+' : '$badge',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

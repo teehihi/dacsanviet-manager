@@ -58,9 +58,53 @@ class Order {
 }
 
 class User {
-  User({required this.id, required this.name, required this.email, this.avatarUrl});
+  User({
+    required this.id,
+    required this.email,
+    required this.fullName,
+    required this.phoneNumber,
+    required this.role,
+    required this.isActive,
+    this.avatarUrl,
+    this.createdAt,
+  });
+
   final String id;
-  final String name;
   final String email;
-  final String? avatarUrl;
+  String fullName;
+  String phoneNumber;
+  String role;
+  bool isActive;
+  String? avatarUrl;
+  final DateTime? createdAt;
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id']?.toString() ?? '',
+      email: json['email'] ?? '',
+      fullName: json['fullName'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? '',
+      role: json['role'] ?? 'USER',
+      isActive: json['isActive'] == 1 || json['isActive'] == true,
+      avatarUrl: json['avatarUrl'],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+    );
+  }
 }
+
+class AdminNotification {
+  final String id;
+  final String title;
+  final String body;
+  final DateTime timestamp;
+  final Map<String, dynamic>? data;
+
+  AdminNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.timestamp,
+    this.data,
+  });
+}
+

@@ -8,28 +8,27 @@ import '../api_response.dart';
 /// Upload Service for images
 class UploadService {
   /// Upload image file
-  static Future<ApiResponse<Map<String, dynamic>>> uploadImage(File imageFile) async {
+  static Future<ApiResponse<Map<String, dynamic>>> uploadImage(
+    File imageFile,
+  ) async {
     try {
       final uri = Uri.parse('${ApiConfig.baseUrl}/api/upload/image');
       final request = http.MultipartRequest('POST', uri);
-      
+
       // Add session ID if available
       final sessionId = ApiService.sessionId;
       if (sessionId != null) {
         request.headers['Authorization'] = 'Bearer $sessionId';
       }
-      
+
       // Add image file
       request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-        ),
+        await http.MultipartFile.fromPath('image', imageFile.path),
       );
-      
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-      
+
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final jsonData = jsonDecode(response.body);
         return ApiResponse<Map<String, dynamic>>(

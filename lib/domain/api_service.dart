@@ -95,6 +95,31 @@ class ApiService {
     }
   }
   
+  /// PATCH request
+  static Future<ApiResponse<T>> patch<T>(
+    String endpoint, {
+    Map<String, dynamic>? body,
+    T Function(dynamic)? fromJson,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+      
+      final response = await http.patch(
+        uri,
+        headers: _headers,
+        body: body != null ? jsonEncode(body) : null,
+      ).timeout(ApiConfig.connectionTimeout);
+      
+      return _handleResponse<T>(response, fromJson);
+    } catch (e) {
+      return ApiResponse<T>(
+        success: false,
+        message: 'Network error: $e',
+        error: e.toString(),
+      );
+    }
+  }
+  
   /// DELETE request
   static Future<ApiResponse<T>> delete<T>(
     String endpoint, {
