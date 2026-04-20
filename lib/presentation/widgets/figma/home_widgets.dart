@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/ui_palette.dart';
@@ -277,6 +278,7 @@ class MiniStatCard extends StatelessWidget {
   }
 }
 
+
 class ChartPlaceholder extends StatelessWidget {
   const ChartPlaceholder({super.key, this.controller});
   final AppController? controller;
@@ -292,149 +294,141 @@ class ChartPlaceholder extends StatelessWidget {
     // Fallback for design previews
     if (last7Days.isEmpty) {
       last7Days = List.generate(7, (i) => {
-        'date': DateTime.now().subtract(Duration(days: 7 - i)).toIso8601String(),
-        'revenue': (i + 1) * 2000.0,
+        'date': DateTime.now().subtract(Duration(days: 6 - i)).toIso8601String(),
+        'revenue': (i + 1) * 200000.0,
       });
     }
     
-    final List<double> values = last7Days.map((d) {
-        final rev = d['revenue'];
-        if (rev == null) return 0.0;
-        return (rev is int ? rev : double.tryParse(rev.toString()) ?? 0.0).toDouble();
-    }).toList();
-
-    // Max value for scaling
-    double maxVal = 1000.0;
-    for (var v in values) { if (v > maxVal) maxVal = v; }
-    if (maxVal == 0) maxVal = 1000.0;
+    final List<FlSpot> spots = [];
+    double maxRevenue = 100000;
     
-    // Add extra padding to maxVal for visual breathing room
-    maxVal = maxVal * 1.2;
+    for (int i = 0; i < last7Days.length; i++) {
+        final rev = last7Days[i]['revenue'];
+        double val = (rev is int ? rev : double.tryParse(rev.toString()) ?? 0.0).toDouble();
+        spots.add(FlSpot(i.toDouble(), val));
+        if (val > maxRevenue) maxRevenue = val;
+    }
 
-    return Column(
-      children: [
-        SizedBox(
-          height: 160,
-          child: CustomPaint(
-            painter: _ChartPainter(values: values, maxVal: maxVal),
-            size: Size.infinite,
+    return Padding(
+      padding: const EdgeInsets.only(top: 20, right: 10),
+      child: SizedBox(
+        height: 200,
+        child: LineChart(
+          LineChartData(
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              horizontalInterval: maxRevenue / 4,
+              getDrawingHorizontalLine: (value) => const FlLine(
+                color: Color(0xFFF1F5F9),
+                strokeWidth: 1,
+              ),
+            ),
+            titlesData: FlTitlesData(
+              show: true,
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 30,
+                  interval: 1,
+                  getTitlesWidget: (value, meta) {
+                    int index = value.toInt();
+                    if (index < 0 || index >= last7Days.length) return const SizedBox();
+                    final date = DateTime.parse(last7Days[index]['date']);
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        '${date.day}/${date.month}',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF94A3B8),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  interval: maxRevenue / 4,
+                  reservedSize: 42,
+                  getTitlesWidget: (value, meta) {
+                    String text = '';
+                    if (value >= 1000000) {
+                      text = '${(value / 1000000).toStringAsFixed(1)}M';
+                    } else if (value >= 1000) {
+                      text = '${(value / 1000).toInt()}K';
+                    } else {
+                      text = value.toInt().toString();
+                    }
+                    return Text(
+                      text,
+                      style: GoogleFonts.dmSans(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF94A3B8),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            borderData: FlBorderData(show: false),
+            minX: 0,
+            maxX: (last7Days.length - 1).toDouble(),
+            minY: 0,
+            maxY: maxRevenue * 1.2,
+            lineBarsData: [
+              LineChartBarData(
+                spots: spots,
+                isCurved: true,
+                gradient: LinearGradient(
+                  colors: [UiPalette.primary, UiPalette.primary.withValues(alpha: 0.5)],
+                ),
+                barWidth: 4,
+                isStrokeCapRound: true,
+                dotData: const FlDotData(show: false),
+                belowBarData: BarAreaData(
+                  show: true,
+                  gradient: LinearGradient(
+                    colors: [
+                      UiPalette.primary.withValues(alpha: 0.2),
+                      UiPalette.primary.withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
+            ],
+            lineTouchData: LineTouchData(
+              touchTooltipData: LineTouchTooltipData(
+                getTooltipColor: (_) => UiPalette.textPrimary,
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((spot) {
+                    return LineTooltipItem(
+                      '₫${spot.y.toInt().toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (Match m) => "${m[1]},")}',
+                      GoogleFonts.dmSans(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: last7Days.isEmpty 
-              ? ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => _buildDayLabel(day)).toList()
-              : last7Days.map((d) {
-                  final date = DateTime.parse(d['date']);
-                  final label = '${date.day}/${date.month}';
-                  return _buildDayLabel(label);
-                }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDayLabel(String label) {
-    return Text(
-      label,
-      style: GoogleFonts.dmSans(
-        fontSize: 10,
-        fontWeight: FontWeight.w600,
-        color: const Color(0xFF94A3B8),
       ),
     );
   }
 }
 
-class _ChartPainter extends CustomPainter {
-  _ChartPainter({required this.values, required this.maxVal});
-  final List<double> values;
-  final double maxVal;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = const Color(0xFFF1F5F9)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    // Draw horizontal grid lines
-    const gridLines = 4;
-    for (var i = 0; i <= gridLines; i++) {
-        final y = size.height - (i * size.height / gridLines);
-        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-        
-        // Draw Y labels
-        final valLabel = (maxVal * i / gridLines).toInt();
-        final textPainter = TextPainter(
-          text: TextSpan(
-            text: valLabel >= 1000000 ? '${(valLabel/1000000).toStringAsFixed(1)}M' : (valLabel >= 1000 ? '${(valLabel/1000).toInt()}K' : '$valLabel'),
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 8),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        textPainter.paint(canvas, Offset(-28, y - 5));
-    }
-
-    if (values.isEmpty) return;
-
-    final stepX = size.width / (values.length - 1);
-    final points = <Offset>[];
-    for (var i = 0; i < values.length; i++) {
-      final x = i * stepX;
-      final y = size.height - (values[i] / maxVal * size.height);
-      points.add(Offset(x, y));
-    }
-
-    final path = Path();
-    path.moveTo(points[0].dx, points[0].dy);
-    
-    // Smooth curves
-    for (var i = 1; i < points.length; i++) {
-      final prev = points[i - 1];
-      final cur = points[i];
-      final controlPoint1 = Offset(prev.dx + (cur.dx - prev.dx) / 2, prev.dy);
-      final controlPoint2 = Offset(prev.dx + (cur.dx - prev.dx) / 2, cur.dy);
-      path.cubicTo(controlPoint1.dx, controlPoint1.dy, controlPoint2.dx, controlPoint2.dy, cur.dx, cur.dy);
-    }
-
-    // Area fill
-    final areaPath = Path.from(path);
-    areaPath.lineTo(size.width, size.height);
-    areaPath.lineTo(0, size.height);
-    areaPath.close();
-
-    final fillPaint = Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [
-          UiPalette.primary.withValues(alpha: 0.2),
-          UiPalette.primary.withValues(alpha: 0.0),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-    canvas.drawPath(areaPath, fillPaint);
-
-    final linePaint = Paint()
-      ..color = UiPalette.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    canvas.drawPath(path, linePaint);
-    
-    // Draw dots
-    final dotPaint = Paint()..color = UiPalette.primary;
-    final dotBgPaint = Paint()..color = Colors.white;
-    for (var p in points) {
-        canvas.drawCircle(p, 5, dotPaint);
-        canvas.drawCircle(p, 3, dotBgPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => true;
-}
 
 class OrderHomeItem extends StatelessWidget {
   const OrderHomeItem({
@@ -470,7 +464,15 @@ class OrderHomeItem extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: imageUrl != null && imageUrl!.isNotEmpty
-                  ? Image.network(imageUrl!, fit: BoxFit.cover)
+                  ? Image.network(
+                      imageUrl!,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+                      },
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.inventory_2_rounded, color: Color(0xFF94A3B8), size: 24),
+                    )
                   : const Icon(Icons.inventory_2_rounded, color: Color(0xFF94A3B8), size: 24),
             ),
           ),

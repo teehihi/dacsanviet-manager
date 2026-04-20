@@ -35,15 +35,22 @@ class OrderService {
   static Future<ApiResponse<Map<String, dynamic>>> updateOrderStatus({
     required String orderId,
     required String status,
+    String? carrierName,
+    String? cancelReason,
+    String? paymentMethod,
   }) async {
     return await ApiService.patch<Map<String, dynamic>>(
       '${ApiConfig.adminOrders}/$orderId/status',
       body: {
         'status': status,
+        if (carrierName != null) 'carrierName': carrierName,
+        if (cancelReason != null) 'cancelReason': cancelReason,
+        if (paymentMethod != null) 'paymentMethod': paymentMethod,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );
   }
+
   
   /// Get order statistics
   static Future<ApiResponse<Map<String, dynamic>>> getOrderStats() async {

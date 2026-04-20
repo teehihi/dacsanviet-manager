@@ -86,13 +86,14 @@ class FigmaProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Row(
                         children: [
-                          _buildMiniStat('248', 'Đơn hàng', UiPalette.primary),
+                          _buildMiniStat(controller.totalOrders.toString(), 'Đơn hàng', UiPalette.primary),
                           const SizedBox(width: 12),
-                          _buildMiniStat('106M', 'Doanh thu', const Color(0xFFF2994A)),
+                          _buildMiniStat(_formatShortRevenue(controller.totalRevenue), 'Doanh thu', const Color(0xFFF2994A)),
                         ],
                       ),
                     ),
@@ -122,7 +123,19 @@ class FigmaProfileScreen extends StatelessWidget {
                   ),
                   child: Stack(
                     children: [
-                      const Center(child: Icon(Icons.person_outline, size: 45, color: UiPalette.primary)),
+                      Center(
+                        child: controller.user?.avatarUrl != null 
+                          ? ClipOval(
+                              child: Image.network(
+                                controller.user!.avatarUrl!, 
+                                width: 90, 
+                                height: 90, 
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(Icons.person_outline, size: 45, color: UiPalette.primary),
+                              ),
+                            )
+                          : const Icon(Icons.person_outline, size: 45, color: UiPalette.primary),
+                      ),
                       Positioned(
                         right: 0,
                         bottom: 0,
@@ -146,17 +159,38 @@ class FigmaProfileScreen extends StatelessWidget {
           child: _buildSectionTitle('THÔNG TIN CỬA HÀNG'),
         ),
         const SizedBox(height: 16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              _ProfileItem(icon: Icons.storefront_outlined, label: 'Tên cửa hàng', value: 'DacSanViet Store'),
-              _ProfileItem(icon: Icons.email_outlined, label: 'Email', value: 'thien@dacsanviet.vn'),
-              _ProfileItem(icon: Icons.phone_outlined, label: 'Số điện thoại', value: '0901 234 567'),
-              _ProfileItem(icon: Icons.location_on_outlined, label: 'Địa chỉ', value: 'Quận 1, TP.HCM'),
+              _ProfileItem(
+                icon: Icons.storefront_outlined, 
+                label: 'Tên cửa hàng', 
+                value: controller.user?.fullName ?? 'DacSanViet Store'
+              ),
+              _ProfileItem(
+                icon: Icons.email_outlined, 
+                label: 'Email', 
+                value: controller.user?.email ?? 'admin@dacsanviet.com'
+              ),
+              _ProfileItem(
+                icon: Icons.phone_outlined, 
+                label: 'Số điện thoại', 
+                value: controller.user?.phoneNumber.isNotEmpty == true 
+                  ? controller.user!.phoneNumber 
+                  : '0901 234 567'
+              ),
+              _ProfileItem(
+                icon: Icons.location_on_outlined, 
+                label: 'Địa chỉ', 
+                value: controller.user?.address?.isNotEmpty == true 
+                  ? controller.user!.address! 
+                  : 'TP. Hồ Chí Minh, Việt Nam'
+              ),
             ],
           ),
         ),
+
 
         const SizedBox(height: 32),
         Padding(
@@ -287,7 +321,19 @@ class FigmaProfileScreen extends StatelessWidget {
     );
   }
 
+  String _formatShortRevenue(int value) {
+    if (value >= 1000000000) {
+      return '${(value / 1000000000).toStringAsFixed(1)}B';
+    } else if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1)}M';
+    } else if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}K';
+    }
+    return value.toString();
+  }
+
   Widget _buildMiniStat(String value, String label, Color color) {
+
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),

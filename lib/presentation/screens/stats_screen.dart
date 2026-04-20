@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
@@ -488,7 +489,37 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _sectionHeader('📊 Doanh thu theo danh mục', onViewAll: () => _showCategoryDetail(categories)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          
+          // Pie Chart for visual distribution
+          if (categories.isNotEmpty)
+            SizedBox(
+              height: 200,
+              child: PieChart(
+                PieChartData(
+                  sectionsSpace: 4,
+                  centerSpaceRadius: 40,
+                  sections: categories.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final c = entry.value;
+                    final rev = _pInt(c['total_revenue']).toDouble();
+                    final pct = totalRev > 0 ? (rev / totalRev * 100) : 0.0;
+                    return PieChartSectionData(
+                      color: catColors[i % catColors.length],
+                      value: rev,
+                      title: '${pct.toStringAsFixed(0)}%',
+                      radius: 50,
+                      titleStyle: GoogleFonts.dmSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          const SizedBox(height: 24),
           // Progress bars
           ...categories.asMap().entries.map((entry) {
             final i = entry.key;
@@ -752,7 +783,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
     if (val == null) return 0;
     if (val is int) return val;
     if (val is double) return val.toInt();
-    return int.tryParse(val.toString()) ?? 0;
+    return double.tryParse(val.toString())?.toInt() ?? 0;
   }
 
   String _currencyStr(int value) {

@@ -112,14 +112,8 @@ class AppController extends ChangeNotifier {
       if (response.success && response.data != null) {
         final userData = response.data!['user'];
         _isAuthenticated = true;
-        _user = User(
-          id: userData['id'].toString(),
-          fullName: userData['fullName'] ?? userData['username'],
-          email: userData['email'],
-          phoneNumber: userData['phone_number'] ?? '',
-          role: userData['role'] ?? 'ADMIN',
-          isActive: true,
-        );
+        _user = User.fromJson(userData);
+
 
         debugPrint('✅ Login successful, loading data...');
 
@@ -253,13 +247,18 @@ class AppController extends ChangeNotifier {
             // Parse status
             OrderStatus status;
             final statusStr = o['status']?.toString().toUpperCase() ?? 'NEW';
-            if (statusStr == 'NEW' || statusStr == 'PENDING') {
+            if (statusStr == 'NEW' || statusStr == 'PENDING' || statusStr == 'PREPARING') {
               status = OrderStatus.pending;
             } else if (statusStr == 'CONFIRMED' || statusStr == 'SHIPPING') {
               status = OrderStatus.shipping;
-            } else {
+            } else if (statusStr == 'DELIVERED' || statusStr == 'COMPLETE') {
               status = OrderStatus.complete;
+            } else if (statusStr == 'CANCELLED' || statusStr == 'REJECTED') {
+              status = OrderStatus.cancelled;
+            } else {
+              status = OrderStatus.complete; // Default to complete for others
             }
+
 
             // Parse items for product summary
             String productSummary = '';
@@ -519,16 +518,18 @@ class AppController extends ChangeNotifier {
     }).toList();
   }
 
-  Future<void> rejectOrder(String id) async {
+  Future<void> rejectOrder(String id, {String? reason}) async {
     try {
       final order = _orders.firstWhere((o) => o.id == id);
       final response = await OrderService.updateOrderStatus(
         orderId: order.code,
         status: 'CANCELLED',
+        cancelReason: reason ?? 'Hủy bởi quản trị viên',
       );
 
       if (response.success) {
         await loadOrders();
+        await loadRevenueOverview();
       } else {
         _error = response.message;
         notifyListeners();
@@ -539,12 +540,13 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> confirmOrder(String id) async {
+  Future<void> confirmOrder(String id, {String? carrierName}) async {
     try {
       final order = _orders.firstWhere((o) => o.id == id);
       final response = await OrderService.updateOrderStatus(
         orderId: order.code,
-        status: 'CONFIRMED',
+        status: 'SHIPPING',
+        carrierName: carrierName ?? 'Giao Hàng Nhanh',
       );
 
       if (response.success) {
@@ -559,16 +561,18 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> completeOrder(String id) async {
+  Future<void> completeOrder(String id, {String? paymentMethod}) async {
     try {
       final order = _orders.firstWhere((o) => o.id == id);
       final response = await OrderService.updateOrderStatus(
         orderId: order.code,
         status: 'DELIVERED',
+        paymentMethod: paymentMethod,
       );
 
       if (response.success) {
         await loadOrders();
+        await loadRevenueOverview();
       } else {
         _error = response.message;
         notifyListeners();
@@ -578,6 +582,7 @@ class AppController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 
   Future<void> loadUsers() async {
     try {

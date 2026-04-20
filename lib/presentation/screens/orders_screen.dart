@@ -114,7 +114,14 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
                 return Column(
                   children: orders.isNotEmpty
                       ? orders
-                          .map((o) => Padding(
+                          .map((o) {
+                              final product = widget.controller.products.isEmpty 
+                                  ? null 
+                                  : widget.controller.products.firstWhere(
+                                      (p) => o.productSummary.contains(p.name), 
+                                      orElse: () => widget.controller.products.first,
+                                    );
+                              return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: OrderCard(
                                   orderCode: o.code,
@@ -124,12 +131,16 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
                                   address: o.address,
                                   productSummary: o.productSummary,
                                   totalAmount: o.totalAmount,
+                                  imageUrl: product?.imageUrl,
                                   onConfirm: o.status == OrderStatus.pending
-                                      ? () => widget.controller.confirmOrder(o.id)
-                                      : (o.status == OrderStatus.shipping ? () => widget.controller.completeOrder(o.id) : null),
-                                  onReject: o.status == OrderStatus.pending ? () => widget.controller.rejectOrder(o.id) : null,
+                                      ? () => _showCarrierDialog(context, o.id)
+                                      : (o.status == OrderStatus.shipping ? () => _showPaymentMethodDialog(context, o.id) : null),
+                                  onReject: o.status == OrderStatus.pending 
+                                      ? () => _showCancelDialog(context, o.id, isReject: true)
+                                      : (o.status == OrderStatus.shipping ? () => _showCancelDialog(context, o.id) : null),
                                 ).animateIn(),
-                              ))
+                              );
+                            })
                           .toList()
                       : [
                           const SizedBox(height: 80),
@@ -154,4 +165,141 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
       ),
     );
   }
+
+  void _showCarrierDialog(BuildContext context, String orderId) {
+
+    final carriers = ['Giao Hàng Nhanh', 'J&T Express', 'Viettel Post', 'Shopee Express', 'GrabExpress'];
+    String selected = carriers[0];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setInternalState) => AlertDialog(
+          title: Text('Chọn đơn vị vận chuyển', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: carriers.map((c) => RadioListTile<String>(
+              title: Text(c, style: GoogleFonts.dmSans()),
+              value: c,
+              groupValue: selected,
+              activeColor: UiPalette.primary,
+              onChanged: (val) {
+                if (val != null) {
+                  setInternalState(() => selected = val);
+                }
+              },
+            )).toList(),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            FilledButton(
+              onPressed: () {
+                widget.controller.confirmOrder(orderId, carrierName: selected);
+                Navigator.pop(ctx);
+              },
+              child: const Text('Xác nhận'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // Improved version with StatefulBuilder for selection update
+  void _showCancelDialog(BuildContext context, String orderId, {bool isReject = false}) {
+    final reasons = [
+      'Khách hàng thay đổi ý định',
+      'Không liên lạc được khách hàng',
+      'Địa chỉ giao hàng không chính xác',
+      'Hết hàng tại kho',
+      'Khách hàng từ chối nhận hàng',
+    ];
+    String? selectedReason;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setInternalState) => AlertDialog(
+          title: Text(isReject ? 'Từ chối đơn hàng' : 'Hủy đơn hàng', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Vui lòng chọn lý do:', style: GoogleFonts.dmSans(fontSize: 14, color: UiPalette.textSecondary)),
+              const SizedBox(height: 12),
+              ...reasons.map((r) => RadioListTile<String>(
+                title: Text(r, style: GoogleFonts.dmSans(fontSize: 14)),
+                value: r,
+                groupValue: selectedReason,
+                contentPadding: EdgeInsets.zero,
+                activeColor: UiPalette.primary,
+                onChanged: (val) {
+                  setInternalState(() => selectedReason = val);
+                },
+              )),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            FilledButton(
+              onPressed: selectedReason == null ? null : () {
+                widget.controller.rejectOrder(orderId, reason: selectedReason);
+                Navigator.pop(ctx);
+              },
+              child: const Text('Đồng ý'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentMethodDialog(BuildContext context, String orderId) {
+    final methods = [
+      {'val': 'COD', 'label': 'Thanh toán khi nhận hàng (COD)'},
+      {'val': 'BANK_TRANSFER', 'label': 'Chuyển khoản ngân hàng'},
+      {'val': 'VNPAY', 'label': 'Cổng thanh toán VNPAY'},
+      {'val': 'MOMO', 'label': 'Ví điện tử MoMo'},
+    ];
+    String selected = methods[0]['val']!;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setInternalState) => AlertDialog(
+          title: Text('Xác nhận thanh toán', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Chọn hình thức thanh toán thực tế:', style: GoogleFonts.dmSans(fontSize: 14, color: UiPalette.textSecondary)),
+              const SizedBox(height: 12),
+              ...methods.map((m) => RadioListTile<String>(
+                title: Text(m['label']!, style: GoogleFonts.dmSans(fontSize: 14)),
+                value: m['val']!,
+                groupValue: selected,
+                contentPadding: EdgeInsets.zero,
+                activeColor: UiPalette.primary,
+                onChanged: (val) {
+                  if (val != null) {
+                    setInternalState(() => selected = val);
+                  }
+                },
+              )),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+            FilledButton(
+              onPressed: () {
+                widget.controller.completeOrder(orderId, paymentMethod: selected);
+                Navigator.pop(ctx);
+              },
+              child: const Text('Hoàn tất giao hàng'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

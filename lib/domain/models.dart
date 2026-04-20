@@ -1,4 +1,4 @@
-enum OrderStatus { pending, shipping, complete }
+enum OrderStatus { pending, shipping, complete, cancelled }
 
 extension OrderStatusX on OrderStatus {
   String get label {
@@ -9,9 +9,12 @@ extension OrderStatusX on OrderStatus {
         return 'Đang giao';
       case OrderStatus.complete:
         return 'Đã giao';
+      case OrderStatus.cancelled:
+        return 'Đã hủy';
     }
   }
 }
+
 
 class Product {
   Product({
@@ -65,6 +68,7 @@ class User {
     required this.phoneNumber,
     required this.role,
     required this.isActive,
+    this.address,
     this.avatarUrl,
     this.createdAt,
   });
@@ -75,6 +79,7 @@ class User {
   String phoneNumber;
   String role;
   bool isActive;
+  String? address;
   String? avatarUrl;
   final DateTime? createdAt;
 
@@ -82,15 +87,18 @@ class User {
     return User(
       id: json['id']?.toString() ?? '',
       email: json['email'] ?? '',
-      fullName: json['fullName'] ?? '',
-      phoneNumber: json['phoneNumber'] ?? '',
+      fullName: json['fullName'] ?? json['full_name'] ?? json['username'] ?? '',
+      phoneNumber: json['phoneNumber'] ?? json['phone_number'] ?? json['phone'] ?? '',
       role: json['role'] ?? 'USER',
-      isActive: json['isActive'] == 1 || json['isActive'] == true,
-      avatarUrl: json['avatarUrl'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      isActive: json['isActive'] == 1 || json['isActive'] == true || json['is_active'] == 1 || json['is_active'] == true,
+      address: json['address']?.toString(),
+      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
+      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : 
+                 json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
     );
   }
 }
+
 
 class AdminNotification {
   final String id;

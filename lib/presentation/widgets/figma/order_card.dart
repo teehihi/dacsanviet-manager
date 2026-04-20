@@ -11,6 +11,7 @@ class OrderCard extends StatelessWidget {
     required this.address,
     required this.productSummary,
     required this.totalAmount,
+    this.imageUrl,
     this.onConfirm,
     this.onReject,
   });
@@ -22,6 +23,7 @@ class OrderCard extends StatelessWidget {
   final String address;
   final String productSummary;
   final int totalAmount;
+  final String? imageUrl;
   final VoidCallback? onConfirm;
   final VoidCallback? onReject;
 
@@ -47,11 +49,18 @@ class OrderCard extends StatelessWidget {
               color: UiPalette.border.withValues(alpha: 0.3),
               child: Row(
                 children: [
-                  Text(
-                    orderCode, 
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: UiPalette.textPrimary),
+                  Expanded(
+                    child: Text(
+                      orderCode, 
+                      style: const TextStyle(
+                        fontSize: 15, 
+                        fontWeight: FontWeight.w800, 
+                        color: UiPalette.textPrimary,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 12),
                   StatusPill(text: state),
                 ],
               ),
@@ -63,7 +72,12 @@ class OrderCard extends StatelessWidget {
                 children: [
                    _OrderInfoRow(icon: Icons.person_rounded, title: customerName, subtitle: '$phone • $address'),
                    const SizedBox(height: 12),
-                   _OrderInfoRow(icon: Icons.inventory_2_rounded, title: 'Sản phẩm', subtitle: productSummary),
+                   _OrderInfoRow(
+                      icon: Icons.inventory_2_rounded, 
+                      title: 'Sản phẩm', 
+                      subtitle: productSummary,
+                      imageUrl: imageUrl,
+                   ),
                    const Divider(height: 32, color: UiPalette.border),
                    Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,13 +100,20 @@ class OrderCard extends StatelessWidget {
                             _SmallButton(onPressed: onConfirm, label: 'Xác nhận', isPrimary: true),
                           ],
                         ),
-                      ] else if (isShipping)
-                        _SmallButton(onPressed: onConfirm, label: 'Đã giao', isPrimary: true)
-                      else
+                      ] else if (isShipping) ...[
+                        Row(
+                          children: [
+                            _SmallButton(onPressed: onReject, label: 'Hủy đơn', isPrimary: false),
+                            const SizedBox(width: 8),
+                            _SmallButton(onPressed: onConfirm, label: 'Đã giao', isPrimary: true),
+                          ],
+                        ),
+                      ] else
                         TextButton(
                           onPressed: () {}, 
                           child: const Text('Chi tiết', style: TextStyle(fontWeight: FontWeight.w700, color: UiPalette.primary)),
                         ),
+
                     ],
                   ),
                 ],
@@ -135,20 +156,36 @@ class StatusPill extends StatelessWidget {
 }
 
 class _OrderInfoRow extends StatelessWidget {
-  const _OrderInfoRow({required this.icon, required this.title, required this.subtitle});
+  const _OrderInfoRow({required this.icon, required this.title, required this.subtitle, this.imageUrl});
   final IconData icon;
   final String title;
   final String subtitle;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(color: UiPalette.border.withValues(alpha: 0.5), shape: BoxShape.circle),
-          child: Icon(icon, size: 18, color: UiPalette.textSecondary),
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: UiPalette.border.withValues(alpha: 0.5), 
+            shape: BoxShape.circle,
+          ),
+          child: ClipOval(
+            child: imageUrl != null && imageUrl!.isNotEmpty
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)));
+                    },
+                    errorBuilder: (context, error, stackTrace) => Icon(icon, size: 18, color: UiPalette.textSecondary),
+                  )
+                : Icon(icon, size: 18, color: UiPalette.textSecondary),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
