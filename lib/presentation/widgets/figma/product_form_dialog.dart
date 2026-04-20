@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/ui_palette.dart';
-import '../../../domain/services/upload_service.dart';
 
 class ProductFormDialog extends StatefulWidget {
   final Map<String, dynamic>? initialData;

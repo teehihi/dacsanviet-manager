@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../state/app_controller.dart';
 import '../widgets/design_widgets.dart';
-import '../widgets/figma/loading_widgets.dart';
 import '../../domain/models.dart';
-import '../theme/ui_palette.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FigmaUsersScreen extends StatefulWidget {

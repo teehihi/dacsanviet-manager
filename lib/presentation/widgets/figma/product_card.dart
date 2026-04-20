@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/ui_palette.dart';
-import 'loading_widgets.dart';
-
 class ProductData {
   const ProductData(this.name, this.category, this.price, this.stock, [this.imageUrl]);
   final String name;

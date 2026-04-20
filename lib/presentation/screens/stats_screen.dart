@@ -4,8 +4,6 @@ import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/common_widgets.dart';
 import '../widgets/figma/home_widgets.dart';
-import '../widgets/figma/loading_widgets.dart';
-
 class FigmaStatsScreen extends StatelessWidget {
   const FigmaStatsScreen({super.key, required this.controller});
   final AppController controller;

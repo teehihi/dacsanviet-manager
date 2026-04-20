@@ -500,8 +500,9 @@ class AppController extends ChangeNotifier {
       final response = await UserService.getUsers(limit: 100);
       
       if (response.success && response.data != null) {
-        _users = response.data!;
-        _totalUsers = _users.length;
+        final usersData = response.data!['users'] as List? ?? [];
+        _users = usersData.map((u) => User.fromJson(u)).toList();
+        _totalUsers = response.data!['total'] ?? _users.length;
         debugPrint('✅ Loaded ${_users.length} users');
         notifyListeners();
       } else {

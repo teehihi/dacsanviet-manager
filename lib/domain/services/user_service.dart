@@ -6,25 +6,19 @@ import '../models.dart';
 /// User Service for Admin
 class UserService {
   /// Get all users with pagination
-  static Future<ApiResponse<List<User>>> getUsers({
+  static Future<ApiResponse<Map<String, dynamic>>> getUsers({
     int page = 1,
     int limit = 50,
     String? search,
   }) async {
-    return await ApiService.get<List<User>>(
+    return await ApiService.get<Map<String, dynamic>>(
       '${ApiConfig.apiPrefix}/admin/users',
       queryParams: {
         'page': page.toString(),
         'limit': limit.toString(),
         if (search != null && search.isNotEmpty) 'q': search,
       },
-      fromJson: (data) {
-        if (data is Map && data['users'] != null) {
-          final list = data['users'] as List;
-          return list.map((u) => User.fromJson(u)).toList();
-        }
-        return [];
-      },
+      fromJson: (data) => data as Map<String, dynamic>,
     );
   }
   

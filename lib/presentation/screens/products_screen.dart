@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/product_card.dart';
-import '../widgets/figma/loading_widgets.dart';
 import '../widgets/design_widgets.dart' hide ProductData;
 import '../widgets/figma/product_form_dialog.dart';
 

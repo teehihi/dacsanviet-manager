@@ -2,11 +2,10 @@ import "../theme/ui_palette.dart";
 import 'package:flutter/material.dart';
 import '../../state/app_controller.dart';
 
-import '../widgets/design_widgets.dart';
+import '../widgets/design_widgets.dart' hide ProductData;
 import '../widgets/figma/product_card.dart';
 import '../widgets/figma/order_card.dart';
-import '../widgets/figma/home_widgets.dart';
-import '../widgets/figma/loading_widgets.dart';
+import '../widgets/figma/home_widgets.dart' hide RevenueCard;
 
 class SplashDesignScreen extends StatelessWidget {
   const SplashDesignScreen({super.key});
