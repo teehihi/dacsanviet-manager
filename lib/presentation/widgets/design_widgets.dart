@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 
 class MemberAvatar extends StatelessWidget {
@@ -30,21 +31,68 @@ class MemberAvatar extends StatelessWidget {
 }
 
 class TopHeader extends StatelessWidget {
-  const TopHeader({super.key, required this.title, required this.subtitle});
+  const TopHeader({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    this.showBackButton = false,
+    this.onBack,
+  });
 
   final String title;
   final String subtitle;
+  final bool showBackButton;
+  final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        if (showBackButton) ...[
+          GestureDetector(
+            onTap: onBack ?? () => Navigator.pop(context),
+            child: Container(
+              width: 42,
+              height: 42,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: UiPalette.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: UiPalette.textDark),
+            ),
+          ),
+        ],
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (subtitle.isNotEmpty) Text(subtitle, style: const TextStyle(color: UiPalette.textMuted)),
-              Text(title, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: UiPalette.textDark)),
+              if (subtitle.isNotEmpty)
+                Text(
+                  subtitle,
+                  style: GoogleFonts.dmSans(
+                    color: UiPalette.textMuted,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              Text(
+                title,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  color: UiPalette.textDark,
+                  letterSpacing: -0.5,
+                ),
+              ),
             ],
           ),
         ),
@@ -55,8 +103,15 @@ class TopHeader extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: UiPalette.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          child: const Icon(Icons.notifications_none_rounded),
+          child: const Icon(Icons.notifications_none_rounded, color: UiPalette.textDark),
         ),
       ],
     );

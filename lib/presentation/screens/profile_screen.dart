@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 import '../../state/app_controller.dart';
 import 'users_screen.dart';
+import 'coupons_screen.dart';
 
 class FigmaProfileScreen extends StatelessWidget {
   const FigmaProfileScreen({super.key, required this.controller});
@@ -189,6 +190,19 @@ class FigmaProfileScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) => FigmaUsersScreen(controller: controller),
+                      ),
+                    );
+                  },
+                ),
+                _buildDivider(),
+                _SettingsItem(
+                  icon: Icons.confirmation_num_outlined,
+                  label: 'Quản lý khuyến mãi',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FigmaCouponsScreen(controller: controller),
                       ),
                     );
                   },

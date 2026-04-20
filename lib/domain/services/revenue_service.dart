@@ -2,58 +2,55 @@ import '../api_service.dart';
 import '../api_config.dart';
 import '../api_response.dart';
 
-/// Revenue Service for Admin
 class RevenueService {
-  /// Get revenue statistics
-  static Future<ApiResponse<Map<String, dynamic>>> getRevenueStats({
-    String? startDate,
-    String? endDate,
-    String? period, // 'day', 'week', 'month', 'year'
-  }) async {
+  static const String revenuePath = '${ApiConfig.apiPrefix}/admin/revenue';
+
+  static Future<ApiResponse<Map<String, dynamic>>> getOverview({String? startDate, String? endDate}) async {
     return await ApiService.get<Map<String, dynamic>>(
-      ApiConfig.adminRevenue,
+      revenuePath, // Note: Base path in controller is getRevenueOverview
       queryParams: {
         if (startDate != null) 'startDate': startDate,
         if (endDate != null) 'endDate': endDate,
-        if (period != null) 'period': period,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );
   }
-  
-  /// Get daily revenue
-  static Future<ApiResponse<Map<String, dynamic>>> getDailyRevenue() async {
+
+  static Future<ApiResponse<Map<String, dynamic>>> getRevenueOverview() async {
     return await ApiService.get<Map<String, dynamic>>(
-      '${ApiConfig.adminRevenue}/daily',
+      '$revenuePath/overview',
       fromJson: (data) => data as Map<String, dynamic>,
     );
   }
-  
-  /// Get monthly revenue
-  static Future<ApiResponse<Map<String, dynamic>>> getMonthlyRevenue() async {
-    return await ApiService.get<Map<String, dynamic>>(
-      '${ApiConfig.adminRevenue}/monthly',
-      fromJson: (data) => data as Map<String, dynamic>,
-    );
+
+  static Future<ApiResponse<Map<String, dynamic>>> getRevenueStats() async {
+    return await getRevenueOverview();
   }
-  
-  /// Get yearly revenue
-  static Future<ApiResponse<Map<String, dynamic>>> getYearlyRevenue() async {
-    return await ApiService.get<Map<String, dynamic>>(
-      '${ApiConfig.adminRevenue}/yearly',
-      fromJson: (data) => data as Map<String, dynamic>,
-    );
-  }
-  
-  /// Get top selling products
-  static Future<ApiResponse<List<dynamic>>> getTopProducts({
-    int limit = 10,
-  }) async {
+
+  static Future<ApiResponse<List<dynamic>>> getRevenueByCategory() async {
     return await ApiService.get<List<dynamic>>(
-      '${ApiConfig.adminRevenue}/top-products',
-      queryParams: {
-        'limit': limit.toString(),
-      },
+      '$revenuePath/by-category',
+      fromJson: (data) => data as List<dynamic>,
+    );
+  }
+
+  static Future<ApiResponse<List<dynamic>>> getRevenueByPaymentMethod() async {
+    return await ApiService.get<List<dynamic>>(
+      '$revenuePath/by-payment-method',
+      fromJson: (data) => data as List<dynamic>,
+    );
+  }
+
+  static Future<ApiResponse<List<dynamic>>> getProfitAnalysis() async {
+    return await ApiService.get<List<dynamic>>(
+      '$revenuePath/profit',
+      fromJson: (data) => data as List<dynamic>,
+    );
+  }
+
+  static Future<ApiResponse<List<dynamic>>> getCLV() async {
+    return await ApiService.get<List<dynamic>>(
+      '$revenuePath/customer-lifetime-value',
       fromJson: (data) => data as List<dynamic>,
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/ui_palette.dart';
+import '../../../domain/api_config.dart';
+
 class ProductData {
   const ProductData(this.name, this.category, this.price, this.stock, [this.imageUrl]);
   final String name;
@@ -14,6 +16,11 @@ class ProductCard extends StatelessWidget {
   final ProductData data;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+
+  String _formatImageUrl(String url) {
+    if (url.startsWith('http')) return url;
+    return '${ApiConfig.baseUrl}${url.startsWith("/") ? "" : "/"}$url';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +52,7 @@ class ProductCard extends StatelessWidget {
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                           child: Image.network(
-                            data.imageUrl!,
+                            _formatImageUrl(data.imageUrl!),
                             fit: BoxFit.cover,
                             width: double.infinity,
                             errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.image_outlined, size: 48, color: Color(0xFFE0E0E0))),

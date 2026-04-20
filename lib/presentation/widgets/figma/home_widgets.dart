@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/ui_palette.dart';
 import '../../theme/figma_assets.dart';
 import '../../../state/app_controller.dart';
+import '../../screens/coupons_screen.dart';
 
 class RevenueCard extends StatelessWidget {
   const RevenueCard({super.key, required this.controller});
@@ -11,6 +12,12 @@ class RevenueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final overview = controller.revenueData?['overview'];
+    final revenue = overview?['total_revenue'] ?? controller.totalRevenue;
+    
+    // Calculate simple growth vs previous (fake for now or use real logical comparison if available)
+    final growth = "12.5%"; 
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -44,7 +51,7 @@ class RevenueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _currencyStr(controller.totalRevenue),
+                    _currencyStr(_parseInt(revenue)),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
@@ -64,7 +71,7 @@ class RevenueCard extends StatelessWidget {
                     const Icon(Icons.north_east_rounded, size: 14, color: Color(0xFF008236)),
                     const SizedBox(width: 4),
                     Text(
-                      '12.5%',
+                      growth,
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -103,16 +110,30 @@ class RevenueCard extends StatelessWidget {
               ),
               QuickAction(
                 bg: const Color(0xFFF5E6FF),
-                icon: FigmaAssets.homeWallet,
+                icon: FigmaAssets.homeWallet, // Using wallet icon for coupon as temporary
                 iconColor: const Color(0xFFAD46FF),
-                label: 'Ví',
-                onTap: () {},
+                label: 'Coupon',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FigmaCouponsScreen(controller: controller),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  int _parseInt(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is double) return val.toInt();
+    return int.tryParse(val.toString()) ?? 0;
   }
 
   String _currencyStr(int value) {
@@ -257,42 +278,79 @@ class MiniStatCard extends StatelessWidget {
 }
 
 class ChartPlaceholder extends StatelessWidget {
-  const ChartPlaceholder({super.key, this.bars = false});
-  final bool bars;
+  const ChartPlaceholder({super.key, this.controller});
+  final AppController? controller;
 
   @override
   Widget build(BuildContext context) {
+    final daily = controller?.revenueData?['daily'] as List? ?? [];
+    
+    // Extract last 7 days from daily data
+    final last7DaysList = daily.length > 7 ? daily.sublist(0, 7) : daily;
+    List<dynamic> last7Days = last7DaysList.reversed.toList();
+    
+    // Fallback for design previews
+    if (last7Days.isEmpty) {
+      last7Days = List.generate(7, (i) => {
+        'date': DateTime.now().subtract(Duration(days: 7 - i)).toIso8601String(),
+        'revenue': (i + 1) * 2000.0,
+      });
+    }
+    
+    final List<double> values = last7Days.map((d) {
+        final rev = d['revenue'];
+        if (rev == null) return 0.0;
+        return (rev is int ? rev : double.tryParse(rev.toString()) ?? 0.0).toDouble();
+    }).toList();
+
+    // Max value for scaling
+    double maxVal = 1000.0;
+    for (var v in values) { if (v > maxVal) maxVal = v; }
+    if (maxVal == 0) maxVal = 1000.0;
+    
+    // Add extra padding to maxVal for visual breathing room
+    maxVal = maxVal * 1.2;
+
     return Column(
       children: [
         SizedBox(
           height: 160,
           child: CustomPaint(
-            painter: _ChartPainter(bars: bars),
+            painter: _ChartPainter(values: values, maxVal: maxVal),
             size: Size.infinite,
           ),
         ),
         const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) {
-            return Text(
-              day,
-              style: GoogleFonts.dmSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF94A3B8),
-              ),
-            );
-          }).toList(),
+          children: last7Days.isEmpty 
+              ? ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => _buildDayLabel(day)).toList()
+              : last7Days.map((d) {
+                  final date = DateTime.parse(d['date']);
+                  final label = '${date.day}/${date.month}';
+                  return _buildDayLabel(label);
+                }).toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildDayLabel(String label) {
+    return Text(
+      label,
+      style: GoogleFonts.dmSans(
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: const Color(0xFF94A3B8),
+      ),
     );
   }
 }
 
 class _ChartPainter extends CustomPainter {
-  _ChartPainter({required this.bars});
-  final bool bars;
+  _ChartPainter({required this.values, required this.maxVal});
+  final List<double> values;
+  final double maxVal;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -308,85 +366,74 @@ class _ChartPainter extends CustomPainter {
         canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
         
         // Draw Y labels
+        final valLabel = (maxVal * i / gridLines).toInt();
         final textPainter = TextPainter(
           text: TextSpan(
-            text: '${i * 2000}',
-            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9),
+            text: valLabel >= 1000000 ? '${(valLabel/1000000).toStringAsFixed(1)}M' : (valLabel >= 1000 ? '${(valLabel/1000).toInt()}K' : '$valLabel'),
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 8),
           ),
           textDirection: TextDirection.ltr,
         )..layout();
-        textPainter.paint(canvas, Offset(-25, y - 5));
+        textPainter.paint(canvas, Offset(-28, y - 5));
     }
 
-    if (bars) {
-      final barWidth = size.width / 14;
-      final paint = Paint()
-        ..color = UiPalette.primary
-        ..style = PaintingStyle.fill;
+    if (values.isEmpty) return;
 
-      for (var i = 0; i < 7; i++) {
-        final x = i * (size.width / 6.5);
-        final h = size.height * (0.3 + (i % 3 * 0.2));
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(x, size.height - h, barWidth, h),
-            const Radius.circular(6),
-          ),
-          paint,
-        );
-      }
-    } else {
-      // Line Chart Path
-      final points = [
-        Offset(0, size.height * 0.7),
-        Offset(size.width * 0.16, size.height * 0.75),
-        Offset(size.width * 0.33, size.height * 0.5),
-        Offset(size.width * 0.5, size.height * 0.6),
-        Offset(size.width * 0.66, size.height * 0.3),
-        Offset(size.width * 0.83, size.height * 0.1),
-        Offset(size.width, size.height * 0.2),
-      ];
+    final stepX = size.width / (values.length - 1);
+    final points = <Offset>[];
+    for (var i = 0; i < values.length; i++) {
+      final x = i * stepX;
+      final y = size.height - (values[i] / maxVal * size.height);
+      points.add(Offset(x, y));
+    }
 
-      final path = Path();
-      path.moveTo(points[0].dx, points[0].dy);
-      for (var i = 1; i < points.length; i++) {
-          final prev = points[i-1];
-          final cur = points[i];
-          path.cubicTo(
-              prev.dx + (cur.dx - prev.dx) / 2, prev.dy,
-              prev.dx + (cur.dx - prev.dx) / 2, cur.dy,
-              cur.dx, cur.dy
-          );
-      }
+    final path = Path();
+    path.moveTo(points[0].dx, points[0].dy);
+    
+    // Smooth curves
+    for (var i = 1; i < points.length; i++) {
+      final prev = points[i - 1];
+      final cur = points[i];
+      final controlPoint1 = Offset(prev.dx + (cur.dx - prev.dx) / 2, prev.dy);
+      final controlPoint2 = Offset(prev.dx + (cur.dx - prev.dx) / 2, cur.dy);
+      path.cubicTo(controlPoint1.dx, controlPoint1.dy, controlPoint2.dx, controlPoint2.dy, cur.dx, cur.dy);
+    }
 
-      // Area fill
-      final areaPath = Path.from(path);
-      areaPath.lineTo(size.width, size.height);
-      areaPath.lineTo(0, size.height);
-      areaPath.close();
+    // Area fill
+    final areaPath = Path.from(path);
+    areaPath.lineTo(size.width, size.height);
+    areaPath.lineTo(0, size.height);
+    areaPath.close();
 
-      final fillPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            UiPalette.primary.withValues(alpha: 0.2),
-            UiPalette.primary.withValues(alpha: 0.0),
-          ],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-      canvas.drawPath(areaPath, fillPaint);
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          UiPalette.primary.withValues(alpha: 0.2),
+          UiPalette.primary.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawPath(areaPath, fillPaint);
 
-      final linePaint = Paint()
-        ..color = UiPalette.primary
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round;
-      canvas.drawPath(path, linePaint);
+    final linePaint = Paint()
+      ..color = UiPalette.primary
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, linePaint);
+    
+    // Draw dots
+    final dotPaint = Paint()..color = UiPalette.primary;
+    final dotBgPaint = Paint()..color = Colors.white;
+    for (var p in points) {
+        canvas.drawCircle(p, 5, dotPaint);
+        canvas.drawCircle(p, 3, dotBgPaint);
     }
   }
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
 }
 
 class OrderHomeItem extends StatelessWidget {

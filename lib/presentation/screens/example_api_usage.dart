@@ -132,11 +132,12 @@ class _ExampleApiUsageScreenState extends State<ExampleApiUsageScreen> {
 
       setState(() {
         if (response.success) {
-          final data = response.data!;
+          final data = response.data!['overview'] as Map<String, dynamic>;
           _result = 'Revenue Statistics\n\n'
-              'Total Revenue: ${data['totalRevenue'] ?? 'N/A'} VND\n'
-              'Total Orders: ${data['totalOrders'] ?? 'N/A'}\n'
-              'Average Order: ${data['averageOrder'] ?? 'N/A'} VND\n';
+              'Total Revenue: ${data['total_revenue'] ?? 'N/A'} VND\n'
+              'Delivered Revenue: ${data['delivered_revenue'] ?? '0'} VND\n'
+              'Total Orders: ${data['total_orders'] ?? 'N/A'}\n'
+              'Average Order: ${data['avg_order_value'] ?? 'N/A'} VND\n';
         } else {
           _result = 'Failed to fetch revenue: ${response.message}';
         }

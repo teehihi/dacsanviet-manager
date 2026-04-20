@@ -142,6 +142,53 @@ class ApiService {
       );
     }
   }
+
+  /// Multipart request (for file uploads)
+  static Future<ApiResponse<T>> multipartRequest<T>(
+    String endpoint, {
+    String method = 'POST',
+    Map<String, String>? fields,
+    Map<String, String>? files, // fieldName: filePath
+    T Function(dynamic)? fromJson,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}$endpoint');
+      final request = http.MultipartRequest(method, uri);
+      
+      // Only add Authorization header, NOT Content-Type
+      // MultipartRequest sets its own Content-Type with boundary automatically
+      if (_sessionId != null) {
+        request.headers['Authorization'] = 'Bearer $_sessionId';
+      }
+      request.headers['Accept'] = 'application/json';
+      
+      // Add fields
+      if (fields != null) {
+        request.fields.addAll(fields);
+      }
+      
+      // Add files
+      if (files != null) {
+        for (var entry in files.entries) {
+          request.files.add(await http.MultipartFile.fromPath(
+            entry.key, 
+            entry.value,
+          ));
+        }
+      }
+      
+      final streamedResponse = await request.send().timeout(ApiConfig.connectionTimeout);
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      return _handleResponse<T>(response, fromJson);
+    } catch (e) {
+      return ApiResponse<T>(
+        success: false,
+        message: 'Multipart error: $e',
+        error: e.toString(),
+      );
+    }
+  }
   
   /// Handle HTTP response
   static ApiResponse<T> _handleResponse<T>(

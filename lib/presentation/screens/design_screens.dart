@@ -388,11 +388,11 @@ class StatisticsDesignScreen extends StatelessWidget {
         SizedBox(height: 12),
         StatTilesGrid(),
         SizedBox(height: 12),
-        SectionCard(title: 'Doanh thu', child: SizedBox(height: 220, child: ChartPlaceholder(bars: true))),
+        SectionCard(title: 'Doanh thu', child: SizedBox(height: 220, child: ChartPlaceholder())),
         SizedBox(height: 12),
         SectionCard(title: 'Xu hướng đơn hàng', child: SizedBox(height: 180, child: ChartPlaceholder())),
         SizedBox(height: 12),
-        SectionCard(title: 'Phân bổ danh mục', child: SizedBox(height: 180, child: ChartPlaceholder(bars: true))),
+        SectionCard(title: 'Phân bổ danh mục', child: SizedBox(height: 180, child: ChartPlaceholder())),
       ],
     );
   }

@@ -61,6 +61,15 @@ class UserService {
     );
   }
   
+  /// Update user role
+  static Future<ApiResponse<User>> updateUserRole(String id, String role) async {
+    return await ApiService.patch<User>(
+      '${ApiConfig.apiPrefix}/admin/users/$id/role',
+      body: {'role': role},
+      fromJson: (data) => User.fromJson(data['user']),
+    );
+  }
+  
   /// Get user statistics
   static Future<ApiResponse<Map<String, dynamic>>> getUserStats() async {
     return await ApiService.get<Map<String, dynamic>>(

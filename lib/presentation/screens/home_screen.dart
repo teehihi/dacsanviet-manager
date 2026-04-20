@@ -134,9 +134,9 @@ class FigmaHomeScreen extends StatelessWidget {
             title: 'Biểu đồ doanh thu',
             actionLabel: 'Tuần này',
             onAction: () {},
-            child: const Padding(
-              padding: EdgeInsets.only(top: 10, left: 10),
-              child: ChartPlaceholder(),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10, left: 10),
+              child: ChartPlaceholder(controller: controller),
             ),
           ),
         ),

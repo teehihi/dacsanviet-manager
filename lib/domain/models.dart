@@ -108,3 +108,76 @@ class AdminNotification {
   });
 }
 
+class Coupon {
+  final String id;
+  final String code;
+  final String type; // 'FIXED', 'PERCENTAGE'
+  final double value;
+  final double minOrderAmount;
+  final double? maxDiscountAmount;
+  final int? usageLimit;
+  final int usedCount;
+  final DateTime? validFrom;
+  final DateTime? validTo;
+  final String? description;
+  final bool isActive;
+
+  Coupon({
+    required this.id,
+    required this.code,
+    required this.type,
+    required this.value,
+    required this.minOrderAmount,
+    this.maxDiscountAmount,
+    this.usageLimit,
+    required this.usedCount,
+    this.validFrom,
+    this.validTo,
+    this.description,
+    required this.isActive,
+  });
+
+  factory Coupon.fromJson(Map<String, dynamic> json) {
+    return Coupon(
+      id: json['id'].toString(),
+      code: json['code'] ?? '',
+      type: json['type'] ?? 'FIXED',
+      value: (json['value'] ?? 0).toDouble(),
+      minOrderAmount: (json['min_order_amount'] ?? 0).toDouble(),
+      maxDiscountAmount: json['max_discount_amount'] != null ? json['max_discount_amount'].toDouble() : null,
+      usageLimit: json['usage_limit'],
+      usedCount: json['used_count'] ?? 0,
+      validFrom: json['valid_from'] != null ? DateTime.tryParse(json['valid_from']) : null,
+      validTo: json['valid_to'] != null ? DateTime.tryParse(json['valid_to']) : null,
+      description: json['description'],
+      isActive: json['is_active'] == 1 || json['is_active'] == true,
+    );
+  }
+}
+
+class Category {
+  final String id;
+  final String name;
+  final String? description;
+  final String? imageUrl;
+  final bool isActive;
+
+  Category({
+    required this.id,
+    required this.name,
+    this.description,
+    this.imageUrl,
+    required this.isActive,
+  });
+
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'].toString(),
+      name: json['name'] ?? '',
+      description: json['description'],
+      imageUrl: json['image_url'],
+      isActive: json['is_active'] == 1 || json['is_active'] == true,
+    );
+  }
+}
+
