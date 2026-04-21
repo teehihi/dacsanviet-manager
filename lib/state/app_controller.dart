@@ -301,9 +301,9 @@ class AppController extends ChangeNotifier {
             _totalOrders = _orders.length;
           }
 
-          _totalRevenue = _orders
-              .where((o) => o.status == OrderStatus.complete)
-              .fold(0, (sum, o) => sum + o.totalAmount);
+          // Don't calculate revenue here - it will be loaded from revenue API
+          // _totalRevenue is set by loadRevenueOverview() which uses delivered_revenue from backend
+          
           debugPrint('✅ Loaded ${_orders.length} orders');
         } else {
           debugPrint('❌ Invalid response format');

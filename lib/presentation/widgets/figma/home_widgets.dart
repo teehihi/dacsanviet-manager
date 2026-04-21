@@ -14,10 +14,11 @@ class RevenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final overview = controller.revenueData?['overview'];
-    final revenue = overview?['total_revenue'] ?? controller.totalRevenue;
+    // Use delivered_revenue (only completed orders) instead of total_revenue
+    final revenue = overview?['delivered_revenue'] ?? controller.totalRevenue;
     
     // Calculate simple growth vs previous (fake for now or use real logical comparison if available)
-    final growth = "12.5%"; 
+    final growth = "12.5%"; // TODO: Calculate real growth from monthly data 
 
     return Container(
       width: double.infinity,
