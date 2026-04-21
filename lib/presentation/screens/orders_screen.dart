@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/ui_palette.dart';
 import '../../domain/models.dart';
+import '../../domain/models/shipping_provider.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/order_card.dart';
 import '../widgets/design_widgets.dart';
+import '../widgets/shipping_provider_selector.dart';
 import 'order_detail_screen.dart';
 
 class FigmaOrdersScreen extends StatefulWidget {
@@ -143,11 +145,11 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
                                     totalAmount: o.totalAmount,
                                     imageUrl: product?.imageUrl,
                                     onConfirm: o.status == OrderStatus.pending
-                                        ? () => _showCarrierDialog(context, o.id)
-                                        : (o.status == OrderStatus.shipping ? () => _showPaymentMethodDialog(context, o.id) : null),
+                                        ? () async => _showCarrierDialog(context, o.id)
+                                        : (o.status == OrderStatus.shipping ? () async => _showPaymentMethodDialog(context, o.id) : null),
                                     onReject: o.status == OrderStatus.pending 
-                                        ? () => _showCancelDialog(context, o.id, isReject: true)
-                                        : (o.status == OrderStatus.shipping ? () => _showCancelDialog(context, o.id) : null),
+                                        ? () async => _showCancelDialog(context, o.id, isReject: true)
+                                        : (o.status == OrderStatus.shipping ? () async => _showCancelDialog(context, o.id) : null),
                                   ).animateIn(),
                                 ),
                               );
@@ -177,43 +179,23 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
     );
   }
 
-  void _showCarrierDialog(BuildContext context, String orderId) {
-
-    final carriers = ['Giao Hàng Nhanh', 'J&T Express', 'Viettel Post', 'Shopee Express', 'GrabExpress'];
-    String selected = carriers[0];
-
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setInternalState) => AlertDialog(
-          title: Text('Chọn đơn vị vận chuyển', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: carriers.map((c) => RadioListTile<String>(
-              title: Text(c, style: GoogleFonts.dmSans()),
-              value: c,
-              groupValue: selected,
-              activeColor: UiPalette.primary,
-              onChanged: (val) {
-                if (val != null) {
-                  setInternalState(() => selected = val);
-                }
-              },
-            )).toList(),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            FilledButton(
-              onPressed: () {
-                widget.controller.confirmOrder(orderId, carrierName: selected);
-                Navigator.pop(ctx);
-              },
-              child: const Text('Xác nhận'),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _showCarrierDialog(BuildContext context, String orderId) async {
+    debugPrint('🚚 [CarrierDialog] Opening for orderId=$orderId');
+    final ShippingProvider? provider = await showShippingProviderSheet(
+      context,
+      providers: kDefaultShippingProviders,
     );
+
+    debugPrint('🚚 [CarrierDialog] Sheet closed, provider=${provider?.name}, mounted=${context.mounted}');
+
+    if (provider != null && context.mounted) {
+      debugPrint('🚚 [CarrierDialog] Calling confirmOrder with carrier=${provider.name}');
+      await widget.controller.confirmOrder(
+        orderId,
+        carrierName: provider.name,
+      );
+      debugPrint('🚚 [CarrierDialog] confirmOrder done, error=${widget.controller.error}');
+    }
   }
 
 

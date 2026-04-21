@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../theme/ui_palette.dart';
 
@@ -24,8 +25,8 @@ class OrderCard extends StatelessWidget {
   final String productSummary;
   final int totalAmount;
   final String? imageUrl;
-  final VoidCallback? onConfirm;
-  final VoidCallback? onReject;
+  final AsyncCallback? onConfirm;
+  final AsyncCallback? onReject;
 
   @override
   Widget build(BuildContext context) {
@@ -204,14 +205,14 @@ class _OrderInfoRow extends StatelessWidget {
 
 class _SmallButton extends StatelessWidget {
   const _SmallButton({required this.onPressed, required this.label, required this.isPrimary});
-  final VoidCallback? onPressed;
+  final AsyncCallback? onPressed;
   final String label;
   final bool isPrimary;
 
   @override
   Widget build(BuildContext context) {
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: onPressed == null ? null : () async { await onPressed!(); },
       style: ElevatedButton.styleFrom(
         backgroundColor: isPrimary ? UiPalette.primary : Colors.white,
         foregroundColor: isPrimary ? Colors.white : UiPalette.textPrimary,

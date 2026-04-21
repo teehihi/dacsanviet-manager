@@ -283,7 +283,7 @@ class AppController extends ChangeNotifier {
               customerName:
                   o['customer_name'] ?? o['customerName'] ?? 'Khách hàng',
               phone: o['phone'] ?? '',
-              address: o['shipping_address'] ?? o['shippingAddress'] ?? '',
+              address: o['shipping_address_text'] ?? o['shipping_address'] ?? o['shippingAddressText'] ?? '',
               productSummary: productSummary.isNotEmpty
                   ? productSummary
                   : 'Đơn hàng',
@@ -309,6 +309,7 @@ class AppController extends ChangeNotifier {
           // Don't calculate revenue here - it will be loaded from revenue API
           // _totalRevenue is set by loadRevenueOverview() which uses delivered_revenue from backend
           
+          notifyListeners();
           debugPrint('✅ Loaded ${_orders.length} orders');
         } else {
           debugPrint('❌ Invalid response format');
@@ -548,19 +549,26 @@ class AppController extends ChangeNotifier {
   Future<void> confirmOrder(String id, {String? carrierName}) async {
     try {
       final order = _orders.firstWhere((o) => o.id == id);
+      debugPrint('📦 [confirmOrder] id=$id order.code=${order.code} carrier=$carrierName');
+
       final response = await OrderService.updateOrderStatus(
         orderId: order.code,
         status: 'SHIPPING',
         carrierName: carrierName ?? 'Giao Hàng Nhanh',
       );
 
+      debugPrint('📦 [confirmOrder] response.success=${response.success} message=${response.message}');
+
       if (response.success) {
+        debugPrint('📦 [confirmOrder] ✅ Success → reloading orders');
         await loadOrders();
       } else {
+        debugPrint('📦 [confirmOrder] ❌ Failed: ${response.message}');
         _error = response.message;
         notifyListeners();
       }
     } catch (e) {
+      debugPrint('📦 [confirmOrder] 💥 Exception: $e');
       _error = 'Lỗi xác nhận đơn hàng: $e';
       notifyListeners();
     }
@@ -797,9 +805,7 @@ class AppController extends ChangeNotifier {
     return 0;
   }
 
-  int get totalOrders => _totalOrders;
   int get totalProducts => _totalProducts;
-  int get totalRevenue => _totalRevenue;
   int get totalUsers => _totalUsers;
   int get totalCustomers => _users.where((u) => u.role == 'USER').length;
 

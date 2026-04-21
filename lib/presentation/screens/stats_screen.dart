@@ -20,7 +20,34 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
   @override
   void initState() {
     super.initState();
-    widget.controller.loadAllRevenueData();
+    _loadDataForPeriod(_selectedPeriod);
+  }
+
+  /// Tính date range từ period string và gọi loadAllRevenueData
+  void _loadDataForPeriod(String period) {
+    final now = DateTime.now();
+    DateTime? startDate;
+    final endDate = now;
+
+    if (period == 'day') {
+      startDate = DateTime(now.year, now.month, now.day);
+    } else if (period == 'week') {
+      final weekStart = now.subtract(Duration(days: now.weekday - 1));
+      startDate = DateTime(weekStart.year, weekStart.month, weekStart.day);
+    } else if (period == 'month') {
+      startDate = DateTime(now.year, now.month, 1);
+    } else if (period == 'year') {
+      startDate = DateTime(now.year, 1, 1);
+    }
+
+    String? startStr;
+    String? endStr;
+    if (startDate != null) {
+      startStr = '${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}';
+      endStr   = '${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}';
+    }
+
+    widget.controller.loadAllRevenueData(startDate: startStr, endDate: endStr);
   }
 
   @override
@@ -157,7 +184,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
             ],
           ),
           GestureDetector(
-            onTap: () => widget.controller.loadAllRevenueData(),
+            onTap: () => _loadDataForPeriod(_selectedPeriod),
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -198,31 +225,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       onTap: () {
         if (_selectedPeriod == value) return;
         setState(() => _selectedPeriod = value);
-
-        DateTime now = DateTime.now();
-        DateTime? startDate;
-        DateTime? endDate = now;
-
-        if (value == 'day') {
-          startDate = DateTime(now.year, now.month, now.day);
-        } else if (value == 'week') {
-          startDate = now.subtract(Duration(days: now.weekday - 1));
-          startDate = DateTime(startDate.year, startDate.month, startDate.day);
-        } else if (value == 'month') {
-          startDate = DateTime(now.year, now.month, 1);
-        } else if (value == 'year') {
-          startDate = DateTime(now.year, 1, 1);
-        }
-
-        String? startStr;
-        String? endStr;
-        
-        if (startDate != null) {
-          startStr = "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}";
-          endStr = "${endDate?.year}-${endDate?.month.toString().padLeft(2, '0')}-${endDate?.day.toString().padLeft(2, '0')}";
-        }
-
-        widget.controller.loadAllRevenueData(startDate: startStr, endDate: endStr);
+        _loadDataForPeriod(value);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
