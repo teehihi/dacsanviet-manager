@@ -16,7 +16,7 @@ class ProductFormDialog extends StatefulWidget {
     int price,
     int stock,
     String? imageUrl,
-    String? imageFile,
+    List<String>? imageFiles,
   )
   onSaved;
 
@@ -39,7 +39,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   String? selectedCategoryId;
   late TextEditingController imageUrlController;
 
-  File? _selectedImage;
+  List<File> _selectedImages = [];
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
@@ -290,16 +290,15 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(
-        source: ImageSource.gallery,
+      final List<XFile> images = await _picker.pickMultiImage(
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 80,
       );
 
-      if (image != null) {
+      if (images.isNotEmpty) {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImages = images.map((xfile) => File(xfile.path)).toList();
         });
       }
     } catch (e) {
@@ -312,8 +311,106 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   }
 
   Widget _buildImagePicker() {
-    if (_selectedImage != null ||
-        (widget.isEdit && imageUrlController.text.isNotEmpty)) {
+    if (_selectedImages.isNotEmpty) {
+      return Column(
+        children: [
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: _selectedImages.length + 1,
+            itemBuilder: (context, index) {
+              if (index == _selectedImages.length) {
+                // Add more button
+                return GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9F9F9),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFE0E0E0),
+                        style: BorderStyle.solid,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.add_photo_alternate_outlined,
+                      color: UiPalette.primary,
+                      size: 32,
+                    ),
+                  ),
+                );
+              }
+
+              return Stack(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                      image: DecorationImage(
+                        image: FileImage(_selectedImages[index]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedImages.removeAt(index);
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.close,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (index == 0)
+                    Positioned(
+                      bottom: 4,
+                      left: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: UiPalette.primary,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'Chính',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
+      );
+    }
+
+    // Show existing images if editing
+    if (widget.isEdit && imageUrlController.text.isNotEmpty) {
       return GestureDetector(
         onTap: _pickImage,
         child: Container(
@@ -322,17 +419,12 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE0E0E0)),
-            image: _selectedImage != null
-                ? DecorationImage(
-                    image: FileImage(_selectedImage!),
-                    fit: BoxFit.cover,
-                  )
-                : DecorationImage(
-                    image: NetworkImage(
-                      _formatImageUrl(imageUrlController.text),
-                    ),
-                    fit: BoxFit.cover,
-                  ),
+            image: DecorationImage(
+              image: NetworkImage(
+                _formatImageUrl(imageUrlController.text),
+              ),
+              fit: BoxFit.cover,
+            ),
           ),
           child: Container(
             decoration: BoxDecoration(
@@ -368,7 +460,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Tải ảnh lên',
+              'Tải ảnh lên (tối đa 5)',
               style: GoogleFonts.dmSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -439,7 +531,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         price,
         stock,
         imageUrl,
-        _selectedImage?.path,
+        _selectedImages.isNotEmpty ? _selectedImages.map((f) => f.path).toList() : null,
       );
       Navigator.pop(context);
     }

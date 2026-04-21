@@ -148,7 +148,7 @@ class ApiService {
     String endpoint, {
     String method = 'POST',
     Map<String, String>? fields,
-    Map<String, String>? files, // fieldName: filePath
+    Map<String, dynamic>? files, // fieldName: filePath or List<filePath>
     T Function(dynamic)? fromJson,
   }) async {
     try {
@@ -167,13 +167,24 @@ class ApiService {
         request.fields.addAll(fields);
       }
       
-      // Add files
+      // Add files (support both single file and multiple files)
       if (files != null) {
         for (var entry in files.entries) {
-          request.files.add(await http.MultipartFile.fromPath(
-            entry.key, 
-            entry.value,
-          ));
+          if (entry.value is List) {
+            // Multiple files with same field name
+            for (var filePath in entry.value) {
+              request.files.add(await http.MultipartFile.fromPath(
+                entry.key,
+                filePath,
+              ));
+            }
+          } else if (entry.value is String) {
+            // Single file
+            request.files.add(await http.MultipartFile.fromPath(
+              entry.key,
+              entry.value,
+            ));
+          }
         }
       }
       

@@ -53,10 +53,10 @@ class ProductService {
     required int stock,
     String? categoryId,
     String? imageUrl,
-    String? imageFile, // Local path to image file
+    List<String>? imageFiles, // Multiple image files
     double? discount,
   }) async {
-    if (imageFile != null) {
+    if (imageFiles != null && imageFiles.isNotEmpty) {
       return await ApiService.multipartRequest<Map<String, dynamic>>(
         ApiConfig.adminProducts,
         method: 'POST',
@@ -67,7 +67,7 @@ class ProductService {
           'stock_quantity': stock.toString(),
           if (categoryId != null) 'category_id': categoryId,
         },
-        files: {'image': imageFile},
+        files: {'images': imageFiles}, // Pass list of file paths
         fromJson: (data) => data as Map<String, dynamic>,
       );
     }
@@ -95,9 +95,9 @@ class ProductService {
     int? stock,
     String? categoryId,
     String? imageUrl,
-    String? imageFile,
+    List<String>? imageFiles, // Multiple image files
   }) async {
-    if (imageFile != null) {
+    if (imageFiles != null && imageFiles.isNotEmpty) {
       return await ApiService.multipartRequest<Map<String, dynamic>>(
         '${ApiConfig.adminProducts}/$id',
         method: 'PUT',
@@ -108,7 +108,7 @@ class ProductService {
           if (stock != null) 'stock_quantity': stock.toString(),
           if (categoryId != null) 'category_id': categoryId,
         },
-        files: {'image': imageFile},
+        files: {'images': imageFiles}, // Pass list of file paths
         fromJson: (data) => data as Map<String, dynamic>,
       );
     }

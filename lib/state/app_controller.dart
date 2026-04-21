@@ -428,7 +428,7 @@ class AppController extends ChangeNotifier {
     required int price,
     required int stock,
     String? imageUrl,
-    String? imageFile,
+    List<String>? imageFiles,
   }) async {
     try {
       final response = await ProductService.createProduct(
@@ -438,7 +438,7 @@ class AppController extends ChangeNotifier {
         stock: stock,
         categoryId: categoryId,
         imageUrl: imageUrl,
-        imageFile: imageFile,
+        imageFiles: imageFiles,
       );
 
       if (response.success) {
@@ -460,7 +460,7 @@ class AppController extends ChangeNotifier {
     required int price,
     required int stock,
     String? imageUrl,
-    String? imageFile,
+    List<String>? imageFiles,
   }) async {
     try {
       final response = await ProductService.updateProduct(
@@ -470,7 +470,7 @@ class AppController extends ChangeNotifier {
         stock: stock,
         categoryId: categoryId,
         imageUrl: imageUrl,
-        imageFile: imageFile,
+        imageFiles: imageFiles,
       );
 
       if (response.success) {
