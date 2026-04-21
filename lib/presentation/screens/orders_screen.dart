@@ -5,6 +5,7 @@ import '../../domain/models.dart';
 import '../../state/app_controller.dart';
 import '../widgets/figma/order_card.dart';
 import '../widgets/design_widgets.dart';
+import 'order_detail_screen.dart';
 
 class FigmaOrdersScreen extends StatefulWidget {
   const FigmaOrdersScreen({super.key, required this.controller});
@@ -123,22 +124,32 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
                                     );
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
-                                child: OrderCard(
-                                  orderCode: o.code,
-                                  state: o.status.label,
-                                  customerName: o.customerName,
-                                  phone: o.phone,
-                                  address: o.address,
-                                  productSummary: o.productSummary,
-                                  totalAmount: o.totalAmount,
-                                  imageUrl: product?.imageUrl,
-                                  onConfirm: o.status == OrderStatus.pending
-                                      ? () => _showCarrierDialog(context, o.id)
-                                      : (o.status == OrderStatus.shipping ? () => _showPaymentMethodDialog(context, o.id) : null),
-                                  onReject: o.status == OrderStatus.pending 
-                                      ? () => _showCancelDialog(context, o.id, isReject: true)
-                                      : (o.status == OrderStatus.shipping ? () => _showCancelDialog(context, o.id) : null),
-                                ).animateIn(),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => OrderDetailScreen(order: o, controller: widget.controller),
+                                      ),
+                                    );
+                                  },
+                                  child: OrderCard(
+                                    orderCode: o.code,
+                                    state: o.status.label,
+                                    customerName: o.customerName,
+                                    phone: o.phone,
+                                    address: o.address,
+                                    productSummary: o.productSummary,
+                                    totalAmount: o.totalAmount,
+                                    imageUrl: product?.imageUrl,
+                                    onConfirm: o.status == OrderStatus.pending
+                                        ? () => _showCarrierDialog(context, o.id)
+                                        : (o.status == OrderStatus.shipping ? () => _showPaymentMethodDialog(context, o.id) : null),
+                                    onReject: o.status == OrderStatus.pending 
+                                        ? () => _showCancelDialog(context, o.id, isReject: true)
+                                        : (o.status == OrderStatus.shipping ? () => _showCancelDialog(context, o.id) : null),
+                                  ).animateIn(),
+                                ),
                               );
                             })
                           .toList()

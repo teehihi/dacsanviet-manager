@@ -35,8 +35,13 @@ class AppController extends ChangeNotifier {
   List<Order> _orders = [];
   int _totalRevenue = 0;
   int _totalOrders = 0;
+  int _currentMonthOrders = 0;
   int _totalProducts = 0;
   int _totalUsers = 0;
+
+  int get totalRevenue => _totalRevenue;
+  int get totalOrders => _totalOrders;
+  int get currentMonthOrders => _currentMonthOrders;
 
   List<Product> get products => List.unmodifiable(_products);
   List<Order> get orders => List.unmodifiable(_orders);
@@ -144,7 +149,7 @@ class AppController extends ChangeNotifier {
           loadUsers(),
           loadCategories(),
           loadCoupons(),
-          loadRevenueOverview(),
+          loadInitialDashboardData(),
           loadCouponStats(),
         ]);
 
@@ -835,11 +840,40 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> loadAllRevenueData() async {
-    await Future.wait([
-      loadRevenueOverview(),
-      loadRevenueByCategory(),
-      loadRevenueByPayment(),
-    ]);
+  Future<void> loadInitialDashboardData() async {
+    final now = DateTime.now();
+    final start = now.subtract(Duration(days: now.weekday - 1));
+    final end = start.add(const Duration(days: 6));
+    
+    final startStr = start.toIso8601String().split('T')[0];
+    final endStr = end.toIso8601String().split('T')[0];
+    
+    await loadAllRevenueData(startDate: startStr, endDate: endStr);
+  }
+
+  Future<void> loadAllRevenueData({String? startDate, String? endDate}) async {
+    try {
+      final response = await RevenueService.getDashboardData(startDate: startDate, endDate: endDate);
+      if (response.success && response.data != null) {
+        _revenueData = response.data;
+        
+        if (_revenueData!['global'] != null) {
+          final delRev = _revenueData!['global']['all_time_revenue'];
+          final totOrd = _revenueData!['global']['all_time_orders'];
+          final curMonOrd = _revenueData!['global']['current_month_orders'];
+          _totalRevenue = _parseInt(delRev);
+          _totalOrders = _parseInt(totOrd);
+          _currentMonthOrders = _parseInt(curMonOrd);
+        }
+        
+        _revenueByCategoryData = _revenueData!['categories'] ?? [];
+        _revenueByPaymentData = _revenueData!['paymentMethods'] ?? [];
+        
+        notifyListeners();
+        debugPrint('✅ AppController: Loaded unified dashboard data');
+      }
+    } catch (e) {
+      debugPrint('Error loading dashboard data: $e');
+    }
   }
 }

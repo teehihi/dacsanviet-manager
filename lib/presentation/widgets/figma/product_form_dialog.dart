@@ -298,7 +298,12 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
 
       if (images.isNotEmpty) {
         setState(() {
-          _selectedImages = images.map((xfile) => File(xfile.path)).toList();
+          // Append new images to existing list instead of replacing
+          _selectedImages.addAll(images.map((xfile) => File(xfile.path)));
+          // Limit to 5 images max
+          if (_selectedImages.length > 5) {
+            _selectedImages = _selectedImages.sublist(0, 5);
+          }
         });
       }
     } catch (e) {

@@ -5,9 +5,9 @@ import '../api_response.dart';
 class RevenueService {
   static const String revenuePath = '${ApiConfig.apiPrefix}/admin/revenue';
 
-  static Future<ApiResponse<Map<String, dynamic>>> getOverview({String? startDate, String? endDate}) async {
+  static Future<ApiResponse<Map<String, dynamic>>> getDashboardData({String? startDate, String? endDate}) async {
     return await ApiService.get<Map<String, dynamic>>(
-      revenuePath, // Note: Base path in controller is getRevenueOverview
+      '$revenuePath/dashboard',
       queryParams: {
         if (startDate != null) 'startDate': startDate,
         if (endDate != null) 'endDate': endDate,
@@ -16,9 +16,13 @@ class RevenueService {
     );
   }
 
-  static Future<ApiResponse<Map<String, dynamic>>> getRevenueOverview() async {
+  static Future<ApiResponse<Map<String, dynamic>>> getRevenueOverview({String? startDate, String? endDate}) async {
     return await ApiService.get<Map<String, dynamic>>(
       '$revenuePath/overview',
+      queryParams: {
+        if (startDate != null) 'startDate': startDate,
+        if (endDate != null) 'endDate': endDate,
+      },
       fromJson: (data) => data as Map<String, dynamic>,
     );
   }
@@ -27,16 +31,24 @@ class RevenueService {
     return await getRevenueOverview();
   }
 
-  static Future<ApiResponse<List<dynamic>>> getRevenueByCategory() async {
+  static Future<ApiResponse<List<dynamic>>> getRevenueByCategory({String? startDate, String? endDate}) async {
     return await ApiService.get<List<dynamic>>(
       '$revenuePath/by-category',
+      queryParams: {
+        if (startDate != null) 'startDate': startDate,
+        if (endDate != null) 'endDate': endDate,
+      },
       fromJson: (data) => data as List<dynamic>,
     );
   }
 
-  static Future<ApiResponse<List<dynamic>>> getRevenueByPaymentMethod() async {
+  static Future<ApiResponse<List<dynamic>>> getRevenueByPaymentMethod({String? startDate, String? endDate}) async {
     return await ApiService.get<List<dynamic>>(
       '$revenuePath/by-payment-method',
+      queryParams: {
+        if (startDate != null) 'startDate': startDate,
+        if (endDate != null) 'endDate': endDate,
+      },
       fromJson: (data) => data as List<dynamic>,
     );
   }

@@ -7,6 +7,7 @@ import '../widgets/figma/home_widgets.dart';
 import '../widgets/figma/common_widgets.dart';
 import '../widgets/figma/notification_sheet.dart';
 import '../../state/app_controller.dart';
+import 'order_detail_screen.dart';
 
 class FigmaHomeScreen extends StatelessWidget {
   const FigmaHomeScreen({super.key, required this.controller});
@@ -86,7 +87,10 @@ class FigmaHomeScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    RevenueCard(controller: controller),
+                    ListenableBuilder(
+                      listenable: controller,
+                      builder: (context, _) => RevenueCard(controller: controller),
+                    ),
                   ],
                 ),
               ),
@@ -104,7 +108,7 @@ class FigmaHomeScreen extends StatelessWidget {
               MiniStatCard(
                 iconBg: const Color(0xFFE6F7ED),
                 iconAsset: FigmaAssets.statOrders,
-                value: '${controller.totalOrders}',
+                value: '${controller.currentMonthOrders}',
                 label: 'Đơn hàng',
               ),
               const SizedBox(width: 12),
@@ -112,7 +116,7 @@ class FigmaHomeScreen extends StatelessWidget {
                 iconBg: const Color(0xFFFFF0E6),
                 iconAsset: FigmaAssets.statRevenue,
                 value: _currencyShort(controller.totalRevenue),
-                label: 'Doanh thu',
+                label: 'Tổng doanh thu',
               ),
               const SizedBox(width: 12),
               MiniStatCard(
@@ -159,13 +163,23 @@ class FigmaHomeScreen extends StatelessWidget {
                             (p) => o.productSummary.contains(p.name), 
                             orElse: () => controller.products.first,
                           );
-                    return OrderHomeItem(
-                        name: o.customerName,
-                        product: o.productSummary,
-                        price: _currencyFull(o.totalAmount),
-                        status: o.status.name,
-                        orderId: o.code.replaceAll('DH-', ''),
-                        imageUrl: product?.imageUrl,
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrderDetailScreen(order: o, controller: controller),
+                          ),
+                        );
+                      },
+                      child: OrderHomeItem(
+                          name: o.customerName,
+                          product: o.productSummary,
+                          price: _currencyFull(o.totalAmount),
+                          status: o.status.name,
+                          orderId: o.code.replaceAll('DH-', ''),
+                          imageUrl: product?.imageUrl,
+                      ),
                     );
                 }),
               ],

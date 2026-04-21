@@ -15,6 +15,8 @@ class FigmaStatsScreen extends StatefulWidget {
 }
 
 class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
+  String _selectedPeriod = 'week'; // 'day', 'week', 'month', 'year'
+  
   @override
   void initState() {
     super.initState();
@@ -32,75 +34,94 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
         final categoryData = widget.controller.revenueByCategoryData;
         final paymentData = widget.controller.revenueByPaymentData;
 
-        return ListView(
-          padding: const EdgeInsets.only(bottom: 120),
-          children: [
-            // Header
-            _buildHeader(),
-            const SizedBox(height: 20),
-
-            // Overview Stats Grid - tappable for detail
-            GestureDetector(
-              onTap: overview != null ? () => _showOverviewDetail(overview) : null,
-              child: _buildOverviewGrid(overview),
-            ),
-            const SizedBox(height: 24),
-
-            // Revenue Chart
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SectionCard(
-                title: 'Doanh thu 7 ngày gần nhất',
-                child: SizedBox(
-                  height: 220,
-                  child: ChartPlaceholder(controller: widget.controller),
+        return CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              elevation: 4,
+              shadowColor: Colors.black.withValues(alpha: 0.1),
+              toolbarHeight: 90,
+              title: _buildHeader(),
+              titleSpacing: 0,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(64),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildPeriodFilter(),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            SliverPadding(
+              padding: const EdgeInsets.only(bottom: 120, top: 20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Overview Stats Grid - tappable for detail
+                  GestureDetector(
+                    onTap: overview != null ? () => _showOverviewDetail(overview) : null,
+                    child: _buildOverviewGrid(overview),
+                  ),
+                  const SizedBox(height: 24),
 
-            // Revenue Breakdown Cards
-            if (overview != null) GestureDetector(
-              onTap: () => _showOverviewDetail(overview),
-              child: _buildRevenueBreakdown(overview),
+                  // Revenue Chart
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: SectionCard(
+                      title: 'Biểu đồ doanh thu',
+                      child: SizedBox(
+                        height: 220,
+                        child: ChartPlaceholder(controller: widget.controller),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Revenue Breakdown Cards
+                  if (overview != null) GestureDetector(
+                    onTap: () => _showOverviewDetail(overview),
+                    child: _buildRevenueBreakdown(overview),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Top Products
+                  if (topProducts.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildTopProductsSection(topProducts),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Revenue by Category
+                  if (categoryData.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildCategoryRevenueSection(categoryData),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Revenue by Payment
+                  if (paymentData.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildPaymentMethodSection(paymentData),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // Monthly Trends
+                  if (monthly.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildMonthlyTrendsSection(monthly),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ]),
+              ),
             ),
-            const SizedBox(height: 20),
-
-            // Top Products
-            if (topProducts.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildTopProductsSection(topProducts),
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            // Revenue by Category
-            if (categoryData.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildCategoryRevenueSection(categoryData),
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            // Revenue by Payment
-            if (paymentData.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildPaymentMethodSection(paymentData),
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            // Monthly Trends
-            if (monthly.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildMonthlyTrendsSection(monthly),
-              ),
-              const SizedBox(height: 20),
-            ],
           ],
         );
       },
@@ -109,17 +130,8 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(24, 0, 24, 0),
+      color: Colors.white,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -160,7 +172,93 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
     );
   }
 
+  Widget _buildPeriodFilter() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildFilterChip('Hôm nay', 'day'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Tuần này', 'week'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Tháng này', 'month'),
+            const SizedBox(width: 8),
+            _buildFilterChip('Năm nay', 'year'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String label, String value) {
+    final isSelected = _selectedPeriod == value;
+    return GestureDetector(
+      onTap: () {
+        if (_selectedPeriod == value) return;
+        setState(() => _selectedPeriod = value);
+
+        DateTime now = DateTime.now();
+        DateTime? startDate;
+        DateTime? endDate = now;
+
+        if (value == 'day') {
+          startDate = DateTime(now.year, now.month, now.day);
+        } else if (value == 'week') {
+          startDate = now.subtract(Duration(days: now.weekday - 1));
+          startDate = DateTime(startDate.year, startDate.month, startDate.day);
+        } else if (value == 'month') {
+          startDate = DateTime(now.year, now.month, 1);
+        } else if (value == 'year') {
+          startDate = DateTime(now.year, 1, 1);
+        }
+
+        String? startStr;
+        String? endStr;
+        
+        if (startDate != null) {
+          startStr = "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}";
+          endStr = "${endDate?.year}-${endDate?.month.toString().padLeft(2, '0')}-${endDate?.day.toString().padLeft(2, '0')}";
+        }
+
+        widget.controller.loadAllRevenueData(startDate: startStr, endDate: endStr);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? UiPalette.primary : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected 
+                ? UiPalette.primary.withValues(alpha: 0.3)
+                : Colors.black.withValues(alpha: 0.04),
+              blurRadius: isSelected ? 12 : 8,
+              offset: Offset(0, isSelected ? 4 : 2),
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.dmSans(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : UiPalette.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOverviewGrid(Map<String, dynamic>? overview) {
+    int currentRev = _pInt(overview?['delivered_revenue']);
+    int currentCount = _pInt(overview?['delivered_count']);
+
+    int profit = currentRev - (currentCount * 15000);
+    int avg = currentCount > 0 ? (currentRev ~/ currentCount) : 0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -172,16 +270,16 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
                 iconColor: const Color(0xFF16A34A),
                 iconBg: const Color(0xFFDCFCE7),
                 title: 'Tổng doanh thu',
-                value: _currencyStr(_pInt(overview?['total_revenue'])),
+                value: _currencyStr(currentRev),
               ),
               const SizedBox(width: 12),
               _buildStatTile(
                 icon: Icons.check_circle_outline,
                 iconColor: const Color(0xFF2563EB),
                 iconBg: const Color(0xFFDBEAFE),
-                title: 'Đã giao',
-                value: _currencyStr(_pInt(overview?['delivered_revenue'])),
-                subtitle: '${_pInt(overview?['delivered_count'])} đơn',
+                title: 'Lợi nhuận',
+                value: _currencyStr(profit),
+                subtitle: '$currentCount đơn • -15k/đơn phí ship',
               ),
             ],
           ),
@@ -192,8 +290,8 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
                 icon: Icons.shopping_bag_outlined,
                 iconColor: const Color(0xFFD97706),
                 iconBg: const Color(0xFFFEF3C7),
-                title: 'Tổng đơn hàng',
-                value: '${_pInt(overview?['total_orders'])}',
+                title: 'Số đơn hoàn thành',
+                value: '$currentCount',
               ),
               const SizedBox(width: 12),
               _buildStatTile(
@@ -201,7 +299,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
                 iconColor: const Color(0xFF7C3AED),
                 iconBg: const Color(0xFFF3E8FF),
                 title: 'TB/Đơn hàng',
-                value: _currencyStr(_pInt(overview?['avg_order_value'])),
+                value: _currencyStr(avg),
               ),
             ],
           ),
@@ -376,7 +474,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('🏆 Top sản phẩm bán chạy', onViewAll: () => _showTopProductsDetail(products)),
+          _sectionHeader('Top sản phẩm bán chạy', onViewAll: () => _showTopProductsDetail(products)),
           const SizedBox(height: 16),
           ...products.take(5).toList().asMap().entries.map((entry) {
             final i = entry.key;
@@ -488,7 +586,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('📊 Doanh thu theo danh mục', onViewAll: () => _showCategoryDetail(categories)),
+          _sectionHeader('Doanh thu theo danh mục', onViewAll: () => _showCategoryDetail(categories)),
           const SizedBox(height: 24),
           
           // Pie Chart for visual distribution
@@ -626,7 +724,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('💳 Phương thức thanh toán', onViewAll: () => _showPaymentDetail(payments)),
+          _sectionHeader('Phương thức thanh toán', onViewAll: () => _showPaymentDetail(payments)),
           const SizedBox(height: 16),
           ...payments.map((p) {
             final method = p['payment_method']?.toString() ?? 'OTHER';
@@ -707,7 +805,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _sectionHeader('📈 Xu hướng theo tháng', onViewAll: () => _showMonthlyDetail(monthly)),
+          _sectionHeader('Xu hướng theo tháng', onViewAll: () => _showMonthlyDetail(monthly)),
           const SizedBox(height: 16),
           ...monthly.take(6).map((m) {
             final month = m['month']?.toString() ?? '';
@@ -918,7 +1016,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
       title: 'Tổng quan doanh thu',
       child: Column(
         children: [
-          _detailRow('Tổng doanh thu', _currencyStr(_pInt(overview['total_revenue'])), Icons.attach_money, const Color(0xFF16A34A)),
+          _detailRow('Tổng tiền (Mọi trạng thái)', _currencyStr(_pInt(overview['total_revenue'])), Icons.attach_money, const Color(0xFF16A34A)),
           _detailRow('Doanh thu đã giao', _currencyStr(_pInt(overview['delivered_revenue'])), Icons.check_circle, const Color(0xFF2563EB)),
           _detailRow('Số đơn đã giao', '${_pInt(overview['delivered_count'])} đơn', Icons.local_shipping, const Color(0xFF2563EB)),
           _detailRow('Doanh thu đang xử lý', _currencyStr(_pInt(overview['pending_revenue'])), Icons.hourglass_bottom, const Color(0xFFD97706)),

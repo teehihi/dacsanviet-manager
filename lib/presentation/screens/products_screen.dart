@@ -84,7 +84,7 @@ class FigmaProductsScreen extends StatelessWidget {
                                                 price,
                                                 stock,
                                                 imageUrl,
-                                                imageFile,
+                                                imageFiles,
                                               ) {
                                                 controller.updateProduct(
                                                   p.id,
@@ -93,7 +93,7 @@ class FigmaProductsScreen extends StatelessWidget {
                                                   price: price,
                                                   stock: stock,
                                                   imageUrl: imageUrl,
-                                                  imageFile: imageFile,
+                                                  imageFiles: imageFiles,
                                                 );
                                               },
                                         ),
@@ -197,14 +197,14 @@ class FigmaProductsScreen extends StatelessWidget {
                   builder: (ctx) => ProductFormDialog(
                     categories: controller.categories.cast<Category>(),
                     onSaved:
-                        (name, categoryId, price, stock, imageUrl, imageFile) {
+                        (name, categoryId, price, stock, imageUrl, imageFiles) {
                           controller.addProduct(
                             name: name,
                             categoryId: categoryId,
                             price: price,
                             stock: stock,
                             imageUrl: imageUrl,
-                            imageFile: imageFile,
+                            imageFiles: imageFiles,
                           );
                         },
                   ),

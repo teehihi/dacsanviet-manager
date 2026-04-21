@@ -46,6 +46,10 @@ class Order {
     required this.paymentMethod,
     required this.status,
     required this.createdAt,
+    this.deliveredAt,
+    this.confirmedAt,
+    this.cancelledAt,
+    this.items,
   });
 
   final String id;
@@ -58,6 +62,32 @@ class Order {
   final String paymentMethod;
   OrderStatus status;
   final DateTime createdAt;
+  final DateTime? deliveredAt;
+  final DateTime? confirmedAt;
+  final DateTime? cancelledAt;
+  final List<OrderItem>? items;
+  
+  // Get the most recent status change time
+  DateTime get lastStatusChangeTime {
+    if (deliveredAt != null) return deliveredAt!;
+    if (cancelledAt != null) return cancelledAt!;
+    if (confirmedAt != null) return confirmedAt!;
+    return createdAt;
+  }
+}
+
+class OrderItem {
+  OrderItem({
+    required this.productName,
+    required this.quantity,
+    required this.price,
+    this.productImage,
+  });
+
+  final String productName;
+  final int quantity;
+  final int price;
+  final String? productImage;
 }
 
 class User {

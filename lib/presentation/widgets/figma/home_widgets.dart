@@ -13,12 +13,32 @@ class RevenueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final overview = controller.revenueData?['overview'];
-    // Use delivered_revenue (only completed orders) instead of total_revenue
-    final revenue = overview?['delivered_revenue'] ?? controller.totalRevenue;
+    final global = controller.revenueData?['global'];
     
-    // Calculate simple growth vs previous (fake for now or use real logical comparison if available)
-    final growth = "12.5%"; // TODO: Calculate real growth from monthly data 
+    // Debug: Print all global data
+    debugPrint('🔍 RevenueCard: global = $global');
+    
+    // Use current_month_revenue for monthly revenue display
+    final monthlyRevenue = global?['current_month_revenue'] ?? 0;
+    final lastMonthRevenue = global?['last_month_revenue'] ?? 0;
+    
+    debugPrint('🔍 RevenueCard: monthlyRevenue = $monthlyRevenue (${monthlyRevenue.runtimeType})');
+    debugPrint('🔍 RevenueCard: lastMonthRevenue = $lastMonthRevenue (${lastMonthRevenue.runtimeType})');
+    
+    // Calculate real growth percentage
+    String growth = "0%";
+    bool isPositive = true;
+    if (lastMonthRevenue != null && _parseInt(lastMonthRevenue) > 0) {
+      final current = _parseInt(monthlyRevenue);
+      final last = _parseInt(lastMonthRevenue);
+      final growthPercent = ((current - last) / last * 100);
+      isPositive = growthPercent >= 0;
+      growth = "${isPositive ? '+' : ''}${growthPercent.toStringAsFixed(1)}%";
+    } else if (_parseInt(monthlyRevenue) > 0) {
+      growth = "+100%";
+    }
+    
+    debugPrint('🔍 RevenueCard: growth = $growth, isPositive = $isPositive'); 
 
     return Container(
       width: double.infinity,
@@ -44,7 +64,7 @@ class RevenueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Tổng doanh thu tháng',
+                    'Doanh thu tháng này',
                     style: GoogleFonts.dmSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -53,7 +73,7 @@ class RevenueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _currencyStr(_parseInt(revenue)),
+                    _currencyStr(_parseInt(monthlyRevenue)),
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
@@ -65,19 +85,23 @@ class RevenueCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDCFCE7),
+                  color: isPositive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.north_east_rounded, size: 14, color: Color(0xFF008236)),
+                    Icon(
+                      isPositive ? Icons.north_east_rounded : Icons.south_east_rounded, 
+                      size: 14, 
+                      color: isPositive ? const Color(0xFF008236) : const Color(0xFFDC2626),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       growth,
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF008236),
+                        color: isPositive ? const Color(0xFF008236) : const Color(0xFFDC2626),
                       ),
                     ),
                   ],
@@ -94,7 +118,9 @@ class RevenueCard extends StatelessWidget {
                 icon: FigmaAssets.homeAdd,
                 iconColor: UiPalette.primary,
                 label: 'Thêm SP',
-                onTap: () {},
+                onTap: () {
+                  controller.setTab(1); // Navigate to Products tab
+                },
               ),
               QuickAction(
                 bg: const Color(0xFFFFF0E6),
@@ -135,6 +161,11 @@ class RevenueCard extends StatelessWidget {
     if (val == null) return 0;
     if (val is int) return val;
     if (val is double) return val.toInt();
+    // Handle string with decimal point (e.g., "555000.00")
+    if (val is String) {
+      final doubleVal = double.tryParse(val);
+      if (doubleVal != null) return doubleVal.toInt();
+    }
     return int.tryParse(val.toString()) ?? 0;
   }
 
@@ -265,11 +296,12 @@ class MiniStatCard extends StatelessWidget {
             Text(
               label,
               style: GoogleFonts.dmSans(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: UiPalette.textSecondary,
+                height: 1.2,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -286,16 +318,18 @@ class ChartPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final daily = controller?.revenueData?['daily'] as List? ?? [];
+    final chartData = controller?.revenueData?['chartData'] as List? ?? [];
+    final groupType = controller?.revenueData?['groupType'] ?? 'daily';
     
-    // Extract last 7 days from daily data
-    final last7DaysList = daily.length > 7 ? daily.sublist(0, 7) : daily;
-    List<dynamic> last7Days = last7DaysList.reversed.toList();
+    List<dynamic> weekDays = chartData.isNotEmpty ? chartData : [];
     
     // Fallback for design previews
-    if (last7Days.isEmpty) {
-      last7Days = List.generate(7, (i) => {
-        'date': DateTime.now().subtract(Duration(days: 6 - i)).toIso8601String(),
+    if (weekDays.isEmpty) {
+      // Generate Mon-Sun of current week
+      final now = DateTime.now();
+      final monday = now.subtract(Duration(days: (now.weekday - 1)));
+      weekDays = List.generate(7, (i) => {
+        'label': monday.add(Duration(days: i)).toIso8601String().split('T')[0],
         'revenue': (i + 1) * 200000.0,
       });
     }
@@ -303,8 +337,8 @@ class ChartPlaceholder extends StatelessWidget {
     final List<FlSpot> spots = [];
     double maxRevenue = 100000;
     
-    for (int i = 0; i < last7Days.length; i++) {
-        final rev = last7Days[i]['revenue'];
+    for (int i = 0; i < weekDays.length; i++) {
+        final rev = weekDays[i]['revenue'];
         double val = (rev is int ? rev : double.tryParse(rev.toString()) ?? 0.0).toDouble();
         spots.add(FlSpot(i.toDouble(), val));
         if (val > maxRevenue) maxRevenue = val;
@@ -336,12 +370,39 @@ class ChartPlaceholder extends StatelessWidget {
                   interval: 1,
                   getTitlesWidget: (value, meta) {
                     int index = value.toInt();
-                    if (index < 0 || index >= last7Days.length) return const SizedBox();
-                    final date = DateTime.parse(last7Days[index]['date']);
+                    if (index < 0 || index >= weekDays.length) return const SizedBox();
+                    final labelRaw = weekDays[index]['label'].toString();
+                    
+                    String labelDisplay = '';
+                    if (groupType == 'hourly') {
+                      final parts = labelRaw.split(' ');
+                      if (parts.length > 1) {
+                          final timeParts = parts[1].split(':');
+                          labelDisplay = '${timeParts[0]}h';
+                      }
+                    } else if (groupType == 'monthly') {
+                      final parts = labelRaw.split('-');
+                      if (parts.length > 1) {
+                          labelDisplay = '${parts[1]}/${parts[0].substring(2)}';
+                      }
+                    } else {
+                      final parts = labelRaw.split('-');
+                      if (parts.length == 3) {
+                          labelDisplay = '${parts[2]}/${parts[1]}';
+                      } else {
+                        try {
+                          final date = DateTime.parse(labelRaw);
+                          labelDisplay = '${date.day}/${date.month}';
+                        } catch (_) {
+                          labelDisplay = labelRaw;
+                        }
+                      }
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.only(top: 8.0),
                       child: Text(
-                        '${date.day}/${date.month}',
+                        labelDisplay,
                         style: GoogleFonts.dmSans(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -380,7 +441,7 @@ class ChartPlaceholder extends StatelessWidget {
             ),
             borderData: FlBorderData(show: false),
             minX: 0,
-            maxX: (last7Days.length - 1).toDouble(),
+            maxX: (weekDays.length - 1).toDouble(),
             minY: 0,
             maxY: maxRevenue * 1.2,
             lineBarsData: [

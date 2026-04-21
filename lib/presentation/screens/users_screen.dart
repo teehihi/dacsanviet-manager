@@ -363,8 +363,10 @@ class PremiumUserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = user.isActive;
-    return Container(
-      decoration: BoxDecoration(
+    return Opacity(
+      opacity: isActive ? 1.0 : 0.6,
+      child: Container(
+        decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -444,6 +446,31 @@ class PremiumUserCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (!isActive) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFECACA), width: 0.5),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_rounded, size: 10, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 4),
+                    Text(
+                      'ĐÃ KHÓA',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 10,
+                        color: const Color(0xFFDC2626),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
         subtitle: Padding(
@@ -584,6 +611,7 @@ class PremiumUserCard extends StatelessWidget {
                   ),
                 ],
           ),
+        ),
         ),
       ),
     );
