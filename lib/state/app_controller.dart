@@ -235,53 +235,7 @@ class AppController extends ChangeNotifier {
         if (jsonData is Map && jsonData['success'] == true) {
           final ordersData = jsonData['data']['orders'] as List? ?? [];
 
-          _orders = ordersData.map((o) {
-            // Parse status
-            OrderStatus status;
-            final statusStr = o['status']?.toString().toUpperCase() ?? 'NEW';
-            if (statusStr == 'NEW' || statusStr == 'PENDING' || statusStr == 'PREPARING') {
-              status = OrderStatus.pending;
-            } else if (statusStr == 'CONFIRMED' || statusStr == 'SHIPPING') {
-              status = OrderStatus.shipping;
-            } else if (statusStr == 'DELIVERED' || statusStr == 'COMPLETE') {
-              status = OrderStatus.complete;
-            } else if (statusStr == 'CANCELLED' || statusStr == 'REJECTED') {
-              status = OrderStatus.cancelled;
-            } else {
-              status = OrderStatus.complete; // Default to complete for others
-            }
-
-
-            // Parse items for product summary
-            String productSummary = '';
-            if (o['items'] != null && o['items'] is List) {
-              final items = o['items'] as List;
-              productSummary = items
-                  .map(
-                    (item) =>
-                        '${item['product_name'] ?? 'Sản phẩm'} x${item['quantity'] ?? 1}',
-                  )
-                  .join(', ');
-            }
-
-            return Order(
-              id: o['id'].toString(),
-              code: o['order_number'] ?? 'ORD-${o['id']}',
-              customerName:
-                  o['customer_name'] ?? o['customerName'] ?? 'Khách hàng',
-              phone: o['phone'] ?? '',
-              address: o['shipping_address_text'] ?? o['shipping_address'] ?? o['shippingAddressText'] ?? '',
-              productSummary: productSummary.isNotEmpty
-                  ? productSummary
-                  : 'Đơn hàng',
-              totalAmount: ParseUtils.parseInt(o['total_amount'] ?? o['totalAmount']),
-              paymentMethod: o['payment_method'] ?? o['paymentMethod'] ?? 'COD',
-              status: status,
-              createdAt:
-                  DateTime.tryParse(o['created_at']?.toString() ?? o['createdAt']?.toString() ?? '') ??
-                  DateTime.now(),
-            );
-          }).toList();
+          _orders = ordersData.map((o) => Order.fromJson(o)).toList();
 
           final pagination = jsonData['data']['pagination'];
           if (pagination != null) {

@@ -57,7 +57,6 @@ class Product {
 }
 
 class Order {
-// ... existing Order class ...
   Order({
     required this.id,
     required this.code,
@@ -89,6 +88,58 @@ class Order {
   final DateTime? confirmedAt;
   final DateTime? cancelledAt;
   final List<OrderItem>? items;
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    // Parse status
+    OrderStatus status;
+    final statusStr = (json['status']?.toString() ?? 'NEW').toUpperCase();
+    if (statusStr == 'NEW' || statusStr == 'PENDING' || statusStr == 'PREPARING') {
+      status = OrderStatus.pending;
+    } else if (statusStr == 'CONFIRMED' || statusStr == 'SHIPPING') {
+      status = OrderStatus.shipping;
+    } else if (statusStr == 'DELIVERED' || statusStr == 'COMPLETE') {
+      status = OrderStatus.complete;
+    } else if (statusStr == 'CANCELLED' || statusStr == 'REJECTED') {
+      status = OrderStatus.cancelled;
+    } else {
+      status = OrderStatus.complete;
+    }
+
+    // Parse items
+    List<OrderItem>? items;
+    String productSummary = '';
+    if (json['items'] != null && json['items'] is List) {
+      final itemsList = json['items'] as List;
+      items = itemsList.map((i) => OrderItem.fromJson(i as Map<String, dynamic>)).toList();
+      productSummary = items.map((item) => '${item.productName} x${item.quantity}').join(', ');
+    } else {
+      productSummary = json['productSummary'] ?? json['product_summary'] ?? 'Đơn hàng';
+    }
+
+    return Order(
+      id: json['id']?.toString() ?? '',
+      code: json['order_number'] ?? json['code'] ?? 'ORD-${json['id']}',
+      customerName: json['customer_name'] ?? json['customerName'] ?? 'Khách hàng',
+      phone: json['phone'] ?? json['customer_phone'] ?? '',
+      address: json['shipping_address_text'] ?? json['shipping_address'] ?? json['address'] ?? '',
+      productSummary: productSummary,
+      totalAmount: (json['total_amount'] ?? json['totalAmount'] ?? 0) is int 
+          ? (json['total_amount'] ?? json['totalAmount'] ?? 0) 
+          : (double.tryParse((json['total_amount'] ?? json['totalAmount'] ?? 0).toString())?.toInt() ?? 0),
+      paymentMethod: json['payment_method'] ?? json['paymentMethod'] ?? 'COD',
+      status: status,
+      createdAt: (json['created_at'] != null ? DateTime.tryParse(json['created_at']) : 
+                  json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : 
+                  json['order_date'] != null ? DateTime.tryParse(json['order_date']) : null)?.toLocal() ?? DateTime.now(),
+      deliveredAt: (json['delivered_at'] != null ? DateTime.tryParse(json['delivered_at']) : 
+                    json['deliveredAt'] != null ? DateTime.tryParse(json['deliveredAt']) : null)?.toLocal(),
+      confirmedAt: (json['confirmed_at'] != null ? DateTime.tryParse(json['confirmed_at']) : 
+                    json['confirmedAt'] != null ? DateTime.tryParse(json['confirmedAt']) : null)?.toLocal(),
+      cancelledAt: (json['cancelled_at'] != null ? DateTime.tryParse(json['cancelled_at']) : 
+                    json['cancelledAt'] != null ? DateTime.tryParse(json['cancelledAt']) : null)?.toLocal(),
+      items: items,
+    );
+  }
   
   // Get the most recent status change time
   DateTime get lastStatusChangeTime {
@@ -111,6 +162,26 @@ class OrderItem {
   final int quantity;
   final int price;
   final String? productImage;
+
+  factory OrderItem.fromJson(Map<String, dynamic> json) {
+    String? rawUrl = json['product_image_url'] ?? json['product_image'] ?? json['productImage'];
+    
+    // Resolve relative URL
+    if (rawUrl != null && !rawUrl.startsWith('http')) {
+      final baseUrl = ApiConfig.baseUrl;
+      final separator = (baseUrl.endsWith('/') || rawUrl.startsWith('/')) ? '' : '/';
+      rawUrl = '$baseUrl$separator$rawUrl';
+    }
+
+    return OrderItem(
+      productName: json['product_name'] ?? json['productName'] ?? '',
+      quantity: (json['quantity'] ?? 0) is int ? json['quantity'] : (int.tryParse(json['quantity'].toString()) ?? 0),
+      price: (json['unit_price'] ?? json['price'] ?? 0) is int 
+          ? (json['unit_price'] ?? json['price'] ?? 0) 
+          : (double.tryParse((json['unit_price'] ?? json['price'] ?? 0).toString())?.toInt() ?? 0),
+      productImage: rawUrl,
+    );
+  }
 }
 
 class User {
