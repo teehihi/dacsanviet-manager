@@ -146,7 +146,7 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
                                     imageUrl: product?.imageUrl,
                                     onConfirm: o.status == OrderStatus.pending
                                         ? () async => _showCarrierDialog(context, o.id)
-                                        : (o.status == OrderStatus.shipping ? () async => _showPaymentMethodDialog(context, o.id) : null),
+                                        : (o.status == OrderStatus.shipping ? () async => widget.controller.completeOrder(o.id) : null),
                                     onReject: o.status == OrderStatus.pending 
                                         ? () async => _showCancelDialog(context, o.id, isReject: true)
                                         : (o.status == OrderStatus.shipping ? () async => _showCancelDialog(context, o.id) : null),
@@ -248,52 +248,6 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
     );
   }
 
-  void _showPaymentMethodDialog(BuildContext context, String orderId) {
-    final methods = [
-      {'val': 'COD', 'label': 'Thanh toán khi nhận hàng (COD)'},
-      {'val': 'BANK_TRANSFER', 'label': 'Chuyển khoản ngân hàng'},
-      {'val': 'VNPAY', 'label': 'Cổng thanh toán VNPAY'},
-      {'val': 'MOMO', 'label': 'Ví điện tử MoMo'},
-    ];
-    String selected = methods[0]['val']!;
 
-    showDialog(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setInternalState) => AlertDialog(
-          title: Text('Xác nhận thanh toán', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Chọn hình thức thanh toán thực tế:', style: GoogleFonts.dmSans(fontSize: 14, color: UiPalette.textSecondary)),
-              const SizedBox(height: 12),
-              ...methods.map((m) => RadioListTile<String>(
-                title: Text(m['label']!, style: GoogleFonts.dmSans(fontSize: 14)),
-                value: m['val']!,
-                groupValue: selected,
-                contentPadding: EdgeInsets.zero,
-                activeColor: UiPalette.primary,
-                onChanged: (val) {
-                  if (val != null) {
-                    setInternalState(() => selected = val);
-                  }
-                },
-              )),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
-            FilledButton(
-              onPressed: () {
-                widget.controller.completeOrder(orderId, paymentMethod: selected);
-                Navigator.pop(ctx);
-              },
-              child: const Text('Hoàn tất giao hàng'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
