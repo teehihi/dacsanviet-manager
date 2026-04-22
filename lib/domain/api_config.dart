@@ -25,6 +25,7 @@ class ApiConfig {
   static const String adminRevenue = '$apiPrefix/admin/revenue';
   static const String adminUsers = '$apiPrefix/admin/users';
   static const String adminOrders = '$apiPrefix/admin/orders';
+  static const String adminAiChat = '$apiPrefix/admin/ai/chat';
 
   // Products endpoints
   static const String products = '$apiPrefix/products';

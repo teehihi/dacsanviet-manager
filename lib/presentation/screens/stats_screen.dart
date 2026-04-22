@@ -259,7 +259,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
     int currentRev = _pInt(overview?['delivered_revenue']);
     int currentCount = _pInt(overview?['delivered_count']);
 
-    int profit = currentRev - (currentCount * 15000);
+    int profit = _pInt(overview?['delivered_profit']);
     int avg = currentCount > 0 ? (currentRev ~/ currentCount) : 0;
 
     return Padding(
@@ -282,7 +282,7 @@ class _FigmaStatsScreenState extends State<FigmaStatsScreen> {
                 iconBg: const Color(0xFFDBEAFE),
                 title: 'Lợi nhuận',
                 value: _currencyStr(profit),
-                subtitle: '$currentCount đơn • -15k/đơn phí ship',
+                subtitle: '$currentCount đơn • Trừ phí ship hãng',
               ),
             ],
           ),

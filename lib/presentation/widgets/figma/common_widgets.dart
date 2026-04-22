@@ -57,23 +57,35 @@ class LabeledInput extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Container(
-          height: 56,
+          height: 58,
           decoration: BoxDecoration(
-            color: const Color(0xFFE5E5E5).withValues(alpha: 0.50),
-            borderRadius: BorderRadius.circular(16),
+            color: UiPalette.primary.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: UiPalette.primary.withValues(alpha: 0.1),
+              width: 1.5,
+            ),
           ),
           child: Row(
             children: [
-              const SizedBox(width: 16),
-              SvgPicture.asset(iconAsset, width: 20, height: 20),
-              const SizedBox(width: 12),
+              const SizedBox(width: 18),
+              SvgPicture.asset(
+                iconAsset,
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(
+                  UiPalette.primary,
+                  BlendMode.srcIn,
+                ),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: TextField(
                   controller: controller,
                   obscureText: obscure,
-                  style: GoogleFonts.dmSans(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: UiPalette.textPrimary,
@@ -83,8 +95,8 @@ class LabeledInput extends StatelessWidget {
                     hintText: hint,
                     hintStyle: GoogleFonts.dmSans(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF6B6B6B).withValues(alpha: 0.60),
+                      fontWeight: FontWeight.w500,
+                      color: UiPalette.textSecondary.withValues(alpha: 0.5),
                     ),
                   ),
                 ),

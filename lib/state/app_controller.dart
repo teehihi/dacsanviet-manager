@@ -378,6 +378,7 @@ class AppController extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
+      _error = null;
       notifyListeners();
       
       final response = await CategoryService.createCategory(
@@ -391,7 +392,6 @@ class AppController extends ChangeNotifier {
         await loadCategories();
       } else {
         _error = response.message;
-        notifyListeners();
       }
       
       _isLoading = false;
@@ -414,6 +414,7 @@ class AppController extends ChangeNotifier {
   }) async {
     try {
       _isLoading = true;
+      _error = null;
       notifyListeners();
       
       final response = await CategoryService.updateCategory(
@@ -428,7 +429,6 @@ class AppController extends ChangeNotifier {
         await loadCategories();
       } else {
         _error = response.message;
-        notifyListeners();
       }
       
       _isLoading = false;
@@ -441,14 +441,25 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> deleteCategory(String id) async {
-    _isLoading = true;
-    notifyListeners();
-    final response = await CategoryService.deleteCategory(id);
-    if (response.success) {
-      await loadCategories();
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+      
+      final response = await CategoryService.deleteCategory(id);
+      if (response.success) {
+        await loadCategories();
+      } else {
+        _error = response.message;
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Lỗi xóa danh mục: $e';
+      _isLoading = false;
+      notifyListeners();
     }
-    _isLoading = false;
-    notifyListeners();
   }
 
   Future<bool> addProductToCategory(String categoryId, String productId) async {
@@ -586,15 +597,16 @@ class AppController extends ChangeNotifier {
     }
   }
 
-  Future<void> confirmOrder(String id, {String? carrierName}) async {
+  Future<void> confirmOrder(String id, {String? carrierName, double? shippingFee}) async {
     try {
       final order = _orders.firstWhere((o) => o.id == id);
-      debugPrint('📦 [confirmOrder] id=$id order.code=${order.code} carrier=$carrierName');
+      debugPrint('📦 [confirmOrder] id=$id order.code=${order.code} carrier=$carrierName fee=$shippingFee');
 
       final response = await OrderService.updateOrderStatus(
         orderId: order.code,
         status: 'SHIPPING',
         carrierName: carrierName ?? 'Giao Hàng Nhanh',
+        shippingFee: shippingFee,
       );
 
       debugPrint('📦 [confirmOrder] response.success=${response.success} message=${response.message}');
@@ -910,6 +922,33 @@ class AppController extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading dashboard data: $e');
+    }
+  }
+  Future<String> chatWithAI(String message, {List<Map<String, dynamic>>? history}) async {
+    try {
+      final response = await ApiService.post<Map<String, dynamic>>(
+        ApiConfig.adminAiChat,
+        body: {
+          'message': message,
+          'history': history,
+          'context': {
+            'totalRevenue': _totalRevenue,
+            'totalOrders': _totalOrders,
+            'totalProducts': _totalProducts,
+            'totalUsers': _totalUsers,
+            'revenueData': _revenueData,
+          }
+        },
+        fromJson: (json) => json as Map<String, dynamic>,
+      );
+
+      if (response.success && response.data != null) {
+        return response.data!['reply'] ?? 'Không nhận được câu trả lời từ AI.';
+      } else {
+        return response.message;
+      }
+    } catch (e) {
+      return 'Lỗi kết nối AI: $e';
     }
   }
 }

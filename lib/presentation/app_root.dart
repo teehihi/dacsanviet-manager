@@ -10,6 +10,9 @@ import 'screens/orders_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/profile_screen.dart';
 import 'widgets/figma/bottom_nav.dart';
+import 'theme/ui_palette.dart';
+
+import 'screens/ai_assistant_screen.dart';
 
 class AppRoot extends StatefulWidget {
   const AppRoot({super.key});
@@ -67,6 +70,23 @@ class _AppRootState extends State<AppRoot> {
         }
 
         return Scaffold(
+          floatingActionButton: controller.tabIndex == 0 || controller.tabIndex == 3
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 90),
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AiAssistantScreen(controller: controller),
+                        ),
+                      );
+                    },
+                    backgroundColor: UiPalette.primary,
+                    child: const Icon(Icons.psychology_outlined, color: Colors.white),
+                  ),
+                )
+              : null,
           body: Stack(
             children: [
               _buildBody(controller.tabIndex),

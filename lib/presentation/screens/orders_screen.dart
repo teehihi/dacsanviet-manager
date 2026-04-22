@@ -189,10 +189,11 @@ class _FigmaOrdersScreenState extends State<FigmaOrdersScreen> {
     debugPrint('🚚 [CarrierDialog] Sheet closed, provider=${provider?.name}, mounted=${context.mounted}');
 
     if (provider != null && context.mounted) {
-      debugPrint('🚚 [CarrierDialog] Calling confirmOrder with carrier=${provider.name}');
+      debugPrint('🚚 [CarrierDialog] Calling confirmOrder with carrier=${provider.name} fee=${provider.fee}');
       await widget.controller.confirmOrder(
         orderId,
         carrierName: provider.name,
+        shippingFee: provider.fee.toDouble(),
       );
       debugPrint('🚚 [CarrierDialog] confirmOrder done, error=${widget.controller.error}');
     }

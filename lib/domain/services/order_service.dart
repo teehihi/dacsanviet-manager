@@ -36,6 +36,7 @@ class OrderService {
     required String orderId,
     required String status,
     String? carrierName,
+    double? shippingFee,
     String? cancelReason,
     String? paymentMethod,
   }) async {
@@ -44,6 +45,7 @@ class OrderService {
       body: {
         'status': status,
         if (carrierName != null) 'carrierName': carrierName,
+        if (shippingFee != null) 'shippingFee': shippingFee,
         if (cancelReason != null) 'cancelReason': cancelReason,
         if (paymentMethod != null) 'paymentMethod': paymentMethod,
       },

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -47,25 +48,47 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: UiPalette.background,
       body: Stack(
         children: [
-          Positioned(
-            left: -150,
-            top: -150,
-            child: BlurCircle(
-              size: 400,
-              color: UiPalette.primary.withValues(alpha: 0.15),
-              blur: 80,
+          // Background Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFF8FBFF),
+                  Color(0xFFE3F2FD),
+                  Color(0xFFF1F8E9),
+                ],
+              ),
             ),
           ),
           Positioned(
-            right: -100,
-            bottom: -50,
+            left: -100,
+            top: -100,
             child: BlurCircle(
-              size: 350,
-              color: const Color(0xFF51A2FF).withValues(alpha: 0.15),
-              blur: 80,
+              size: 450,
+              color: UiPalette.primary.withValues(alpha: 0.12),
+              blur: 90,
+            ),
+          ),
+          Positioned(
+            right: -80,
+            bottom: 100,
+            child: BlurCircle(
+              size: 380,
+              color: const Color(0xFF2B7FFF).withValues(alpha: 0.1),
+              blur: 90,
+            ),
+          ),
+          Positioned(
+            left: 50,
+            bottom: -150,
+            child: BlurCircle(
+              size: 400,
+              color: UiPalette.accent.withValues(alpha: 0.08),
+              blur: 100,
             ),
           ),
           SafeArea(
@@ -73,166 +96,206 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
-                  vertical: 40,
+                  vertical: 30,
                 ),
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Image.asset(FigmaAssets.logoLogin, width: 140),
-                    ),
-                    const SizedBox(height: 28),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 40,
-                            offset: const Offset(0, 20),
-                          ),
-                        ],
+                    Hero(
+                      tag: 'logo',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Image.asset(FigmaAssets.logoLogin, width: 150),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Chào mừng trở lại! 👋',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: UiPalette.textPrimary,
+                    ),
+                    const SizedBox(height: 20),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(38),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                        child: Container(
+                          padding: const EdgeInsets.all(28),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.8),
+                            borderRadius: BorderRadius.circular(38),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              width: 1.5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 40,
+                                offset: const Offset(0, 20),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Đăng nhập để tiếp tục quản lý.',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: UiPalette.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          LabeledInput(
-                            label: 'Email',
-                            controller: email,
-                            iconAsset: FigmaAssets.loginEmail,
-                            hint: 'admin@dacsanviet.vn',
-                            obscure: false,
-                          ),
-                          const SizedBox(height: 20),
-                          LabeledInput(
-                            label: 'Mật khẩu',
-                            controller: password,
-                            iconAsset: FigmaAssets.loginLock,
-                            hint: '••••••••',
-                            obscure: obscure,
-                            trailing: IconButton(
-                              icon: SvgPicture.asset(
-                                FigmaAssets.loginEye,
-                                width: 20,
-                                colorFilter: const ColorFilter.mode(
-                                  Color(0xFF6B6B6B),
-                                  BlendMode.srcIn,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Chào mừng trở lại! 👋',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w800,
+                                  color: UiPalette.textPrimary,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                              onPressed: () =>
-                                  setState(() => obscure = !obscure),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {},
-                              child: Text(
-                                'Quên mật khẩu?',
+                              const SizedBox(height: 10),
+                              Text(
+                                'Đăng nhập để tiếp tục quản lý.',
                                 style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: UiPalette.primary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: UiPalette.textSecondary,
                                 ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          if (errorMessage != null)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.red.shade50,
-                                borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 36),
+                              LabeledInput(
+                                label: 'Email',
+                                controller: email,
+                                iconAsset: FigmaAssets.loginEmail,
+                                hint: 'admin@dacsanviet.vn',
+                                obscure: false,
                               ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: Colors.red.shade700,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      errorMessage!,
-                                      style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        color: Colors.red.shade700,
-                                      ),
+                              const SizedBox(height: 24),
+                              LabeledInput(
+                                label: 'Mật khẩu',
+                                controller: password,
+                                iconAsset: FigmaAssets.loginLock,
+                                hint: '••••••••',
+                                obscure: obscure,
+                                trailing: IconButton(
+                                  icon: SvgPicture.asset(
+                                    FigmaAssets.loginEye,
+                                    width: 22,
+                                    colorFilter: ColorFilter.mode(
+                                      UiPalette.textSecondary.withValues(alpha: 0.7),
+                                      BlendMode.srcIn,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          if (errorMessage != null) const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 60,
-                            child: ElevatedButton(
-                              onPressed: isLoading ? null : _handleLogin,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: UiPalette.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
+                                  onPressed: () =>
+                                      setState(() => obscure = !obscure),
                                 ),
-                                elevation: 0,
-                                disabledBackgroundColor: UiPalette.primary
-                                    .withValues(alpha: 0.5),
                               ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: () {},
+                                  style: TextButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                  child: Text(
+                                    'Quên mật khẩu?',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: UiPalette.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              if (errorMessage != null)
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  margin: const EdgeInsets.only(bottom: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade50.withValues(alpha: 0.7),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.red.shade100,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error_outline_rounded,
+                                        color: Colors.red.shade700,
+                                        size: 20,
                                       ),
-                                    )
-                                  : Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          'Đăng nhập',
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          errorMessage!,
                                           style: GoogleFonts.dmSans(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.red.shade800,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        SvgPicture.asset(
-                                          FigmaAssets.loginArrow,
-                                          width: 20,
-                                          height: 20,
-                                        ),
-                                      ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Container(
+                                width: double.infinity,
+                                height: 62,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: UiPalette.primary.withValues(alpha: 0.3),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
                                     ),
-                            ),
+                                  ],
+                                  gradient: const LinearGradient(
+                                    colors: UiPalette.primaryGradient,
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: isLoading ? null : _handleLogin,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: isLoading
+                                      ? const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2.5,
+                                          ),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              'Đăng nhập',
+                                              style: GoogleFonts.plusJakartaSans(
+                                                fontSize: 17,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            SvgPicture.asset(
+                                              FigmaAssets.loginArrow,
+                                              width: 20,
+                                              height: 20,
+                                              colorFilter: const ColorFilter.mode(
+                                                Colors.white,
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -243,15 +306,24 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                           'Chưa có tài khoản? ',
                           style: GoogleFonts.dmSans(
                             fontSize: 14,
+                            fontWeight: FontWeight.w500,
                             color: UiPalette.textSecondary,
                           ),
                         ),
-                        Text(
-                          'Đăng ký ngay',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: UiPalette.primary,
+                        TextButton(
+                          onPressed: () {},
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Đăng ký ngay',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: UiPalette.primary,
+                            ),
                           ),
                         ),
                       ],

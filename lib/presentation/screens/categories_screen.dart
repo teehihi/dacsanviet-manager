@@ -22,10 +22,29 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   @override
   void initState() {
     super.initState();
+    widget.controller.addListener(_errorListener);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.loadCategories();
       widget.controller.loadProducts();
     });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_errorListener);
+    super.dispose();
+  }
+
+  void _errorListener() {
+    if (widget.controller.error != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(widget.controller.error!),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void _showCategoryForm(BuildContext context, {Category? category}) {
