@@ -32,12 +32,20 @@ class FigmaSplashScreen extends StatelessWidget {
           Positioned(
             left: -100,
             top: -100,
-            child: BlurCircle(size: 400, color: Colors.white.withValues(alpha: 0.1), blur: 60),
+            child: BlurCircle(
+              size: 400,
+              color: Colors.white.withValues(alpha: 0.1),
+              blur: 60,
+            ),
           ),
           Positioned(
             right: -50,
             bottom: 100,
-            child: BlurCircle(size: 300, color: const Color(0xFF05DF72).withValues(alpha: 0.2), blur: 60),
+            child: BlurCircle(
+              size: 300,
+              color: const Color(0xFF05DF72).withValues(alpha: 0.2),
+              blur: 60,
+            ),
           ),
           Center(
             child: Column(
@@ -54,11 +62,11 @@ class FigmaSplashScreen extends StatelessWidget {
                         color: Colors.black.withValues(alpha: 0.15),
                         blurRadius: 32,
                         offset: const Offset(0, 8),
-                      )
+                      ),
                     ],
                   ),
                   child: Center(
-                    child: Image.asset(FigmaAssets.logoSplash, width: 90),
+                    child: Image.asset(FigmaAssets.logoSplash, width: 80),
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -74,7 +82,7 @@ class FigmaSplashScreen extends StatelessWidget {
                         color: Colors.black.withValues(alpha: 0.2),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
-                      )
+                      ),
                     ],
                   ),
                 ),

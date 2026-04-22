@@ -1,13 +1,12 @@
 import 'package:flutter/foundation.dart' hide Category;
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 
-import '../domain/models.dart';
 import '../domain/domain.dart';
 import '../domain/services/socket_service.dart';
-import '../domain/services/auth_service.dart';
-import '../domain/api_service.dart';
 import '../domain/services/notification_service.dart';
+import '../domain/utils/parse_utils.dart';
 import '../domain/utils/string_utils.dart';
 
 class AppController extends ChangeNotifier {
@@ -185,19 +184,7 @@ class AppController extends ChangeNotifier {
         _products = productsData
             .map((p) {
               try {
-                String? rawUrl = p['image_url']?.toString() ?? p['imageUrl']?.toString();
-                if (rawUrl != null && rawUrl.startsWith('/')) {
-                  rawUrl = '${ApiConfig.baseUrl}$rawUrl';
-                }
-                
-                return Product(
-                  id: p['id']?.toString() ?? '',
-                  name: p['name']?.toString() ?? '',
-                  category: p['category_name']?.toString() ?? p['category']?.toString() ?? 'Khác',
-                  price: _parseInt(p['price']),
-                  stock: _parseInt(p['stock_quantity'] ?? p['stock']),
-                  imageUrl: rawUrl,
-                );
+                return Product.fromJson(p as Map<String, dynamic>);
               } catch (e) {
                 debugPrint('⚠️ Error parsing single product: $e | Data: $p');
                 return null;
@@ -208,7 +195,7 @@ class AppController extends ChangeNotifier {
 
         final pagination = response.data!['pagination'];
         if (pagination != null) {
-          _totalProducts = _parseInt(pagination['totalItems'] ?? pagination['total']);
+          _totalProducts = ParseUtils.parseInt(pagination['totalItems'] ?? pagination['total']);
         } else {
           _totalProducts = _products.length;
         }
@@ -287,7 +274,7 @@ class AppController extends ChangeNotifier {
               productSummary: productSummary.isNotEmpty
                   ? productSummary
                   : 'Đơn hàng',
-              totalAmount: _parseInt(o['total_amount'] ?? o['totalAmount']),
+              totalAmount: ParseUtils.parseInt(o['total_amount'] ?? o['totalAmount']),
               paymentMethod: o['payment_method'] ?? o['paymentMethod'] ?? 'COD',
               status: status,
               createdAt:
@@ -415,7 +402,7 @@ class AppController extends ChangeNotifier {
   Future<void> loadCategories() async {
     try {
       debugPrint('📥 AppController: Loading categories...');
-      final response = await ProductService.getCategories();
+      final response = await CategoryService.getAllCategories();
       if (response.success && response.data != null) {
         _categories = response.data!;
         debugPrint('✅ AppController: Loaded ${_categories.length} categories');
@@ -426,6 +413,105 @@ class AppController extends ChangeNotifier {
     } catch (e) {
       debugPrint('❌ AppController: Exception loading categories: $e');
     }
+  }
+
+  Future<void> addCategory({
+    required String name,
+    String? description,
+    String? imageUrl,
+    File? imageFile,
+    String? parentId,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      
+      final response = await CategoryService.createCategory(
+        name: name,
+        description: description,
+        imageUrl: imageUrl,
+        imageFile: imageFile,
+      );
+
+      if (response.success) {
+        await loadCategories();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Lỗi tạo danh mục: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateCategory(
+    String id, {
+    required String name,
+    String? description,
+    String? imageUrl,
+    File? imageFile,
+    String? parentId,
+    bool? isActive,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+      
+      final response = await CategoryService.updateCategory(
+        id,
+        name: name,
+        description: description,
+        imageUrl: imageUrl,
+        imageFile: imageFile,
+      );
+
+      if (response.success) {
+        await loadCategories();
+      } else {
+        _error = response.message;
+        notifyListeners();
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = 'Lỗi cập nhật danh mục: $e';
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteCategory(String id) async {
+    _isLoading = true;
+    notifyListeners();
+    final response = await CategoryService.deleteCategory(id);
+    if (response.success) {
+      await loadCategories();
+    }
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<bool> addProductToCategory(String categoryId, String productId) async {
+    _isLoading = true;
+    notifyListeners();
+    final response = await CategoryService.addProductToCategory(categoryId, productId);
+    if (response.success) {
+      // Reload products and categories to reflect changes
+      await loadProducts();
+      await loadCategories();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    }
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   Future<void> addProduct({
@@ -784,8 +870,8 @@ class AppController extends ChangeNotifier {
           final totOrd = _revenueData!['overview']['total_orders'];
           debugPrint('📊 AppController: delivered_revenue type: ${delRev.runtimeType}, total_orders type: ${totOrd.runtimeType}');
           
-          _totalRevenue = _parseInt(delRev);
-          _totalOrders = _parseInt(totOrd);
+          _totalRevenue = ParseUtils.parseInt(delRev);
+          _totalOrders = ParseUtils.parseInt(totOrd);
         }
         notifyListeners();
         debugPrint('✅ AppController: Loaded revenue overview');
@@ -793,16 +879,6 @@ class AppController extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading revenue overview: $e');
     }
-  }
-
-  int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) {
-      return int.tryParse(value) ?? (double.tryParse(value)?.toInt() ?? 0);
-    }
-    return 0;
   }
 
   int get totalProducts => _totalProducts;
@@ -867,9 +943,9 @@ class AppController extends ChangeNotifier {
           final delRev = _revenueData!['global']['all_time_revenue'];
           final totOrd = _revenueData!['global']['all_time_orders'];
           final curMonOrd = _revenueData!['global']['current_month_orders'];
-          _totalRevenue = _parseInt(delRev);
-          _totalOrders = _parseInt(totOrd);
-          _currentMonthOrders = _parseInt(curMonOrd);
+          _totalRevenue = ParseUtils.parseInt(delRev);
+          _totalOrders = ParseUtils.parseInt(totOrd);
+          _currentMonthOrders = ParseUtils.parseInt(curMonOrd);
         }
         
         _revenueByCategoryData = _revenueData!['categories'] ?? [];

@@ -44,6 +44,10 @@ class ApiConfig {
   // Notifications endpoints
   static const String notifications = '$apiPrefix/notifications';
 
+  // Categories endpoints
+  static const String categories = '$apiPrefix/categories';
+  static const String adminCategories = '$apiPrefix/categories';
+
   // Timeout settings
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);

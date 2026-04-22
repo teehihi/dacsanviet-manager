@@ -1,0 +1,90 @@
+﻿Analyzing dacsanviet-manager...                                 
+
+   info - Dangling library doc comment - lib\domain\domain.dart:1:1 - dangling_library_doc_comments
+   info - Use the null-aware operator '?.' rather than an explicit 'null' comparison - lib\domain\models.dart:185:26 - prefer_null_aware_operators
+   info - Don't invoke 'print' in production code - lib\domain\services\auth_service.dart:44:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\domain\services\auth_service.dart:46:9 - avoid_print
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\auth_service.dart:67:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\auth_service.dart:68:9 - use_null_aware_elements
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:7:17 - non_type_as_type_argument
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:17:17 - non_type_as_type_argument
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:24:17 - non_type_as_type_argument
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:42:17 - non_type_as_type_argument
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\category_service.dart:50:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\category_service.dart:51:7 - use_null_aware_elements
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:68:17 - non_type_as_type_argument
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\category_service.dart:76:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\category_service.dart:77:7 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\category_service.dart:78:7 - use_null_aware_elements
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:95:17 - non_type_as_type_argument
+  error - The name 'ApiResponse' isn't a type, so it can't be used as a type argument - lib\domain\services\category_service.dart:99:17 - non_type_as_type_argument
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\order_service.dart:19:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\order_service.dart:20:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\order_service.dart:46:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\order_service.dart:47:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\order_service.dart:48:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:33:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:34:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:68:11 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:82:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:83:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:105:11 - use_null_aware_elements
+warning - Dead code - lib\domain\services\product_service.dart:106:63 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\domain\services\product_service.dart:106:66 - dead_null_aware_expression
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:109:11 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:119:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:120:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:121:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:122:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:123:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\product_service.dart:124:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:12:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:13:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:23:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:24:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:38:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:39:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:49:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\revenue_service.dart:50:9 - use_null_aware_elements
+   info - Dangling library doc comment - lib\domain\services\services.dart:1:1 - dangling_library_doc_comments
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\user_service.dart:42:9 - use_null_aware_elements
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\domain\services\user_service.dart:43:9 - use_null_aware_elements
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\app_root.dart:50:38 - use_build_context_synchronously
+warning - Unused import: 'dart:io' - lib\presentation\screens\categories_screen.dart:1:8 - unused_import
+   info - The import of '../../domain/models.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/domain.dart' - lib\presentation\screens\categories_screen.dart:5:8 - unnecessary_import
+   info - The import of '../../domain/api_config.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/domain.dart' - lib\presentation\screens\categories_screen.dart:7:8 - unnecessary_import
+warning - Unused import: '../theme/ui_palette.dart' - lib\presentation\screens\categories_screen.dart:8:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\screens\categories_screen.dart:394:36 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\presentation\screens\categories_screen.dart:401:36 - use_build_context_synchronously
+warning - Unused import: '../widgets/figma/common_widgets.dart' - lib\presentation\screens\coupons_screen.dart:6:8 - unused_import
+   info - Unnecessary use of string interpolation - lib\presentation\screens\coupons_screen.dart:305:88 - unnecessary_string_interpolations
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor or activeTrackColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\presentation\screens\coupons_screen.dart:354:23 - deprecated_member_use
+   info - Unnecessary use of multiple underscores - lib\presentation\screens\order_detail_screen.dart:169:49 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\presentation\screens\order_detail_screen.dart:169:53 - unnecessary_underscores
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\screens\orders_screen.dart:226:17 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\screens\orders_screen.dart:229:17 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\screens\orders_screen.dart:272:17 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\presentation\screens\orders_screen.dart:275:17 - deprecated_member_use
+warning - The library 'package:flutter/material.dart' doesn't export a member with the hidden name 'Category' - lib\presentation\screens\products_screen.dart:1:45 - undefined_hidden_name
+   info - Unnecessary use of multiple underscores - lib\presentation\screens\profile_screen.dart:134:51 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores - lib\presentation\screens\profile_screen.dart:134:55 - unnecessary_underscores
+warning - Unused import: '../../domain/utils/string_utils.dart' - lib\presentation\screens\users_screen.dart:6:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\figma\add_product_to_category_dialog.dart:10:9 - use_super_parameters
+warning - The value of the field '_searchQuery' isn't used - lib\presentation\widgets\figma\add_product_to_category_dialog.dart:21:10 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\figma\add_product_to_category_dialog.dart:51:35 - deprecated_member_use
+warning - Unused import: '../../theme/ui_palette.dart' - lib\presentation\widgets\figma\category_form_dialog.dart:7:8 - unused_import
+   info - Parameter 'key' could be a super parameter - lib\presentation\widgets\figma\category_form_dialog.dart:13:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\figma\category_form_dialog.dart:69:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\presentation\widgets\figma\category_form_dialog.dart:104:65 - deprecated_member_use
+   info - Use the null-aware marker '?' rather than a null check via an 'if' - lib\presentation\widgets\figma\common_widgets.dart:92:15 - use_null_aware_elements
+warning - The library 'package:flutter/material.dart' doesn't export a member with the hidden name 'Category' - lib\presentation\widgets\figma\product_form_dialog.dart:2:45 - undefined_hidden_name
+   info - The private field _isUploading could be 'final' - lib\presentation\widgets\figma\product_form_dialog.dart:43:8 - prefer_final_fields
+warning - The value of the field '_isUploading' isn't used - lib\presentation\widgets\figma\product_form_dialog.dart:43:8 - unused_field
+   info - The import of '../domain/models.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/domain.dart' - lib\state\app_controller.dart:6:8 - unnecessary_import
+   info - The import of '../domain/services/auth_service.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/domain.dart' - lib\state\app_controller.dart:9:8 - unnecessary_import
+   info - The import of '../domain/api_service.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/domain.dart' - lib\state\app_controller.dart:10:8 - unnecessary_import
+warning - Dead code - lib\state\app_controller.dart:917:46 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\state\app_controller.dart:917:49 - dead_null_aware_expression
+warning - Dead code - lib\state\app_controller.dart:918:52 - dead_code
+warning - The left operand can't be null, so the right operand is never executed - lib\state\app_controller.dart:918:55 - dead_null_aware_expression
+

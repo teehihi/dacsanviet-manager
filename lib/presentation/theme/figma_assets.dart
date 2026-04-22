@@ -16,6 +16,7 @@ class FigmaAssets {
   static const homeOrders = 'assets/figma/home_orders.svg';
   static const homeQr = 'assets/figma/home_qr.svg';
   static const homeWallet = 'assets/figma/home_wallet.svg';
+  static const homeCategory = 'assets/figma/nav_cube.svg'; // Reusing cube for category
 
   static const statOrders = 'assets/figma/stat_orders.svg';
   static const statRevenue = 'assets/figma/stat_revenue.svg';

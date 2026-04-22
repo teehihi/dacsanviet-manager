@@ -6,6 +6,8 @@ import '../../theme/ui_palette.dart';
 import '../../theme/figma_assets.dart';
 import '../../../state/app_controller.dart';
 import '../../screens/coupons_screen.dart';
+import '../../screens/categories_screen.dart';
+import '../../../domain/utils/parse_utils.dart';
 
 class RevenueCard extends StatelessWidget {
   const RevenueCard({super.key, required this.controller});
@@ -28,13 +30,13 @@ class RevenueCard extends StatelessWidget {
     // Calculate real growth percentage
     String growth = "0%";
     bool isPositive = true;
-    if (lastMonthRevenue != null && _parseInt(lastMonthRevenue) > 0) {
-      final current = _parseInt(monthlyRevenue);
-      final last = _parseInt(lastMonthRevenue);
+    if (lastMonthRevenue != null && ParseUtils.parseInt(lastMonthRevenue) > 0) {
+      final current = ParseUtils.parseInt(monthlyRevenue);
+      final last = ParseUtils.parseInt(lastMonthRevenue);
       final growthPercent = ((current - last) / last * 100);
       isPositive = growthPercent >= 0;
       growth = "${isPositive ? '+' : ''}${growthPercent.toStringAsFixed(1)}%";
-    } else if (_parseInt(monthlyRevenue) > 0) {
+    } else if (ParseUtils.parseInt(monthlyRevenue) > 0) {
       growth = "+100%";
     }
     
@@ -73,7 +75,7 @@ class RevenueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _currencyStr(_parseInt(monthlyRevenue)),
+                    '${ParseUtils.formatPrice(monthlyRevenue)}đ',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
@@ -131,10 +133,17 @@ class RevenueCard extends StatelessWidget {
               ),
               QuickAction(
                 bg: const Color(0xFFEBF3FF),
-                icon: FigmaAssets.homeQr,
+                icon: FigmaAssets.homeCategory,
                 iconColor: const Color(0xFF2B7FFF),
-                label: 'QR Code',
-                onTap: () {},
+                label: 'Danh mục',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CategoriesScreen(controller: controller),
+                    ),
+                  );
+                },
               ),
               QuickAction(
                 bg: const Color(0xFFF5E6FF),
@@ -155,29 +164,6 @@ class RevenueCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  int _parseInt(dynamic val) {
-    if (val == null) return 0;
-    if (val is int) return val;
-    if (val is double) return val.toInt();
-    // Handle string with decimal point (e.g., "555000.00")
-    if (val is String) {
-      final doubleVal = double.tryParse(val);
-      if (doubleVal != null) return doubleVal.toInt();
-    }
-    return int.tryParse(val.toString()) ?? 0;
-  }
-
-  String _currencyStr(int value) {
-    final raw = value.toString();
-    final b = StringBuffer();
-    for (var i = 0; i < raw.length; i++) {
-      final reverseIndex = raw.length - i;
-      b.write(raw[i]);
-      if (reverseIndex > 1 && reverseIndex % 3 == 1) b.write(',');
-    }
-    return '₫$b';
   }
 }
 

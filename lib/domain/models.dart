@@ -1,3 +1,5 @@
+import 'api_config.dart';
+
 enum OrderStatus { pending, shipping, complete, cancelled }
 
 extension OrderStatusX on OrderStatus {
@@ -32,9 +34,30 @@ class Product {
   int price;
   int stock;
   String? imageUrl;
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    String? rawUrl = json['image_url']?.toString() ?? json['imageUrl']?.toString();
+    
+    // Resolve relative URL
+    if (rawUrl != null && !rawUrl.startsWith('http')) {
+      final baseUrl = ApiConfig.baseUrl;
+      final separator = (baseUrl.endsWith('/') || rawUrl.startsWith('/')) ? '' : '/';
+      rawUrl = '$baseUrl$separator$rawUrl';
+    }
+
+    return Product(
+      id: json['id']?.toString() ?? '',
+      name: json['name'] ?? '',
+      category: json['category_name'] ?? json['category'] ?? '',
+      price: int.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      stock: int.tryParse(json['stock_quantity']?.toString() ?? json['stock']?.toString() ?? '0') ?? 0,
+      imageUrl: rawUrl,
+    );
+  }
 }
 
 class Order {
+// ... existing Order class ...
   Order({
     required this.id,
     required this.code,
@@ -114,6 +137,15 @@ class User {
   final DateTime? createdAt;
 
   factory User.fromJson(Map<String, dynamic> json) {
+    String? rawUrl = json['avatarUrl']?.toString() ?? json['avatar_url']?.toString();
+    
+    // Resolve relative URL
+    if (rawUrl != null && !rawUrl.startsWith('http')) {
+      final baseUrl = ApiConfig.baseUrl;
+      final separator = (baseUrl.endsWith('/') || rawUrl.startsWith('/')) ? '' : '/';
+      rawUrl = '$baseUrl$separator$rawUrl';
+    }
+
     return User(
       id: json['id']?.toString() ?? '',
       email: json['email'] ?? '',
@@ -122,7 +154,7 @@ class User {
       role: json['role'] ?? 'USER',
       isActive: json['isActive'] == 1 || json['isActive'] == true || json['is_active'] == 1 || json['is_active'] == true,
       address: json['address']?.toString(),
-      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
+      avatarUrl: rawUrl,
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : 
                  json['created_at'] != null ? DateTime.tryParse(json['created_at']) : null,
     );
@@ -209,11 +241,20 @@ class Category {
   });
 
   factory Category.fromJson(Map<String, dynamic> json) {
+    String? rawUrl = json['image_url']?.toString() ?? json['imageUrl']?.toString();
+    
+    // Resolve relative URL
+    if (rawUrl != null && !rawUrl.startsWith('http')) {
+      final baseUrl = ApiConfig.baseUrl;
+      final separator = (baseUrl.endsWith('/') || rawUrl.startsWith('/')) ? '' : '/';
+      rawUrl = '$baseUrl$separator$rawUrl';
+    }
+
     return Category(
       id: json['id'].toString(),
       name: json['name'] ?? '',
       description: json['description'],
-      imageUrl: json['image_url'],
+      imageUrl: rawUrl,
       isActive: json['is_active'] == 1 || json['is_active'] == true,
     );
   }

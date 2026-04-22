@@ -53,21 +53,35 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
           Positioned(
             left: -150,
             top: -150,
-            child: BlurCircle(size: 400, color: UiPalette.primary.withValues(alpha: 0.15), blur: 80),
+            child: BlurCircle(
+              size: 400,
+              color: UiPalette.primary.withValues(alpha: 0.15),
+              blur: 80,
+            ),
           ),
           Positioned(
             right: -100,
             bottom: -50,
-            child: BlurCircle(size: 350, color: const Color(0xFF51A2FF).withValues(alpha: 0.15), blur: 80),
+            child: BlurCircle(
+              size: 350,
+              color: const Color(0xFF51A2FF).withValues(alpha: 0.15),
+              blur: 80,
+            ),
           ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 40,
+                ),
                 child: Column(
                   children: [
-                    Image.asset(FigmaAssets.logoLogin, width: 140),
-                    const SizedBox(height: 48),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Image.asset(FigmaAssets.logoLogin, width: 140),
+                    ),
+                    const SizedBox(height: 28),
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -78,7 +92,7 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                             color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 40,
                             offset: const Offset(0, 20),
-                          )
+                          ),
                         ],
                       ),
                       child: Column(
@@ -117,8 +131,16 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                             hint: '••••••••',
                             obscure: obscure,
                             trailing: IconButton(
-                              icon: SvgPicture.asset(FigmaAssets.loginEye, width: 20, colorFilter: const ColorFilter.mode(Color(0xFF6B6B6B), BlendMode.srcIn)),
-                              onPressed: () => setState(() => obscure = !obscure),
+                              icon: SvgPicture.asset(
+                                FigmaAssets.loginEye,
+                                width: 20,
+                                colorFilter: const ColorFilter.mode(
+                                  Color(0xFF6B6B6B),
+                                  BlendMode.srcIn,
+                                ),
+                              ),
+                              onPressed: () =>
+                                  setState(() => obscure = !obscure),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -146,7 +168,11 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red.shade700,
+                                    size: 20,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
@@ -168,9 +194,12 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                               onPressed: isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: UiPalette.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
                                 elevation: 0,
-                                disabledBackgroundColor: UiPalette.primary.withValues(alpha: 0.5),
+                                disabledBackgroundColor: UiPalette.primary
+                                    .withValues(alpha: 0.5),
                               ),
                               child: isLoading
                                   ? const SizedBox(
@@ -182,7 +211,8 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                                       ),
                                     )
                                   : Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
                                           'Đăng nhập',
@@ -193,7 +223,11 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        SvgPicture.asset(FigmaAssets.loginArrow, width: 20, height: 20),
+                                        SvgPicture.asset(
+                                          FigmaAssets.loginArrow,
+                                          width: 20,
+                                          height: 20,
+                                        ),
                                       ],
                                     ),
                             ),
@@ -207,7 +241,10 @@ class _FigmaLoginScreenState extends State<FigmaLoginScreen> {
                       children: [
                         Text(
                           'Chưa có tài khoản? ',
-                          style: GoogleFonts.dmSans(fontSize: 14, color: UiPalette.textSecondary),
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            color: UiPalette.textSecondary,
+                          ),
                         ),
                         Text(
                           'Đăng ký ngay',

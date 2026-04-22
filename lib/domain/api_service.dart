@@ -143,6 +143,38 @@ class ApiService {
     }
   }
 
+  /// POST Multipart request
+  static Future<ApiResponse<T>> postMultipart<T>(
+    String endpoint, {
+    Map<String, String>? fields,
+    Map<String, dynamic>? files,
+    T Function(dynamic)? fromJson,
+  }) async {
+    return multipartRequest<T>(
+      endpoint,
+      method: 'POST',
+      fields: fields,
+      files: files,
+      fromJson: fromJson,
+    );
+  }
+
+  /// PUT Multipart request
+  static Future<ApiResponse<T>> putMultipart<T>(
+    String endpoint, {
+    Map<String, String>? fields,
+    Map<String, dynamic>? files,
+    T Function(dynamic)? fromJson,
+  }) async {
+    return multipartRequest<T>(
+      endpoint,
+      method: 'PUT',
+      fields: fields,
+      files: files,
+      fromJson: fromJson,
+    );
+  }
+
   /// Multipart request (for file uploads)
   static Future<ApiResponse<T>> multipartRequest<T>(
     String endpoint, {
