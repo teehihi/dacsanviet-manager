@@ -282,14 +282,19 @@ class Coupon {
     return Coupon(
       id: json['id'].toString(),
       code: json['code'] ?? '',
-      type: json['type'] ?? 'FIXED',
-      value: (json['value'] ?? 0).toDouble(),
-      minOrderAmount: (json['min_order_amount'] ?? 0).toDouble(),
-      maxDiscountAmount: json['max_discount_amount'] != null ? json['max_discount_amount'].toDouble() : null,
-      usageLimit: json['usage_limit'],
+      // Backend dùng discount_type/discount_value, fallback về type/value
+      type: json['discount_type'] ?? json['type'] ?? 'FIXED',
+      value: double.tryParse((json['discount_value'] ?? json['value'] ?? 0).toString()) ?? 0.0,
+      minOrderAmount: double.tryParse((json['min_order_amount'] ?? 0).toString()) ?? 0.0,
+      maxDiscountAmount: json['max_discount_amount'] != null
+          ? double.tryParse(json['max_discount_amount'].toString())
+          : null,
+      usageLimit: json['max_uses'] ?? json['usage_limit'],
       usedCount: json['used_count'] ?? 0,
-      validFrom: json['valid_from'] != null ? DateTime.tryParse(json['valid_from']) : null,
-      validTo: json['valid_to'] != null ? DateTime.tryParse(json['valid_to']) : null,
+      validFrom: json['valid_from'] != null ? DateTime.tryParse(json['valid_from'].toString()) : null,
+      validTo: (json['valid_to'] ?? json['expires_at']) != null
+          ? DateTime.tryParse((json['valid_to'] ?? json['expires_at']).toString())
+          : null,
       description: json['description'],
       isActive: json['is_active'] == 1 || json['is_active'] == true,
     );

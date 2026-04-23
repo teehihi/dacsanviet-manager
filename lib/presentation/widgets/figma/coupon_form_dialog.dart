@@ -24,6 +24,7 @@ class _CouponFormDialogState extends State<CouponFormDialog> {
   late TextEditingController valueController;
   late TextEditingController minAmountController;
   late TextEditingController descriptionController;
+  late TextEditingController usageLimitController;
   String type = 'FIXED';
   DateTime? validFrom;
   DateTime? validTo;
@@ -39,7 +40,12 @@ class _CouponFormDialogState extends State<CouponFormDialog> {
     );
     descriptionController =
         TextEditingController(text: widget.initialData?['description'] ?? '');
+    usageLimitController = TextEditingController(
+      text: widget.initialData?['usage_limit']?.toString() ?? '100',
+    );
     type = widget.initialData?['type'] ?? 'FIXED';
+    // Normalize: PERCENT -> PERCENTAGE để khớp với dropdown items
+    if (type == 'PERCENT') type = 'PERCENTAGE';
     
     if (widget.initialData?['valid_from'] != null) {
       if (widget.initialData!['valid_from'] is DateTime) {
@@ -93,6 +99,13 @@ class _CouponFormDialogState extends State<CouponFormDialog> {
                 'Đơn hàng tối thiểu (₫)',
                 minAmountController,
                 hint: '0',
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              _buildField(
+                'Số lượt dùng tối đa',
+                usageLimitController,
+                hint: '100',
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 16),
@@ -293,11 +306,14 @@ class _CouponFormDialogState extends State<CouponFormDialog> {
               children: [
                 Icon(Icons.calendar_today, size: 16, color: UiPalette.primary),
                 const SizedBox(width: 8),
-                Text(
-                  date != null ? fmt.format(date) : 'Chọn ngày',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    date != null ? fmt.format(date) : 'Chọn ngày',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -315,6 +331,7 @@ class _CouponFormDialogState extends State<CouponFormDialog> {
       'type': type,
       'value': double.tryParse(valueController.text) ?? 0,
       'min_order_amount': double.tryParse(minAmountController.text) ?? 0,
+      'usage_limit': int.tryParse(usageLimitController.text) ?? 100,
       'description': descriptionController.text.trim(),
       'valid_from': validFrom?.toIso8601String(),
       'valid_to': validTo?.toIso8601String(),

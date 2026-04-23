@@ -719,26 +719,33 @@ class AppController extends ChangeNotifier {
   // --- Coupon Management ---
   Future<void> loadCoupons() async {
     try {
-      debugPrint('📥 AppController: Loading coupons and stats...');
-      // Admin API for coupons returns { coupons, stats }
-      final response = await ApiService.get<Map<String, dynamic>>(
+      debugPrint('📥 AppController: Loading coupons...');
+      final response = await ApiService.get<List<dynamic>>(
         ApiConfig.adminCoupons,
-        fromJson: (json) => json as Map<String, dynamic>,
+        fromJson: (json) {
+          debugPrint('🔍 fromJson received type: ${json.runtimeType}');
+          debugPrint('🔍 fromJson value: $json');
+          if (json is List) return json;
+          if (json is Map && json['data'] is List) return json['data'] as List;
+          return [];
+        },
       );
 
+      debugPrint('📦 response.success: ${response.success}');
+      debugPrint('📦 response.data type: ${response.data.runtimeType}');
+      debugPrint('📦 response.data: ${response.data}');
+      debugPrint('📦 response.message: ${response.message}');
+
       if (response.success && response.data != null) {
-        final couponsData = response.data!['coupons'] as List? ?? [];
-        _coupons = couponsData.map((c) => Coupon.fromJson(c)).toList();
-        
-        if (response.data!['stats'] != null) {
-          _couponStats = response.data!['stats'];
-        }
-        
+        _coupons = response.data!.map((c) => Coupon.fromJson(c)).toList();
         notifyListeners();
-        debugPrint('✅ AppController: Loaded ${_coupons.length} coupons and stats');
+        debugPrint('✅ AppController: Loaded ${_coupons.length} coupons');
+      } else {
+        debugPrint('⚠️ response not success or data null');
       }
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('❌ AppController: Error loading coupons: $e');
+      debugPrint('❌ Stack: $stack');
     }
   }
 

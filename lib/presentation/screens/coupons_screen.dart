@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../theme/ui_palette.dart';
@@ -20,6 +21,7 @@ class _FigmaCouponsScreenState extends State<FigmaCouponsScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🎯 FigmaCouponsScreen initState - coupons count: ${widget.controller.coupons.length}');
     widget.controller.loadCoupons();
   }
 
@@ -44,6 +46,7 @@ class _FigmaCouponsScreenState extends State<FigmaCouponsScreen> {
           'value': coupon.value,
           'min_order_amount': coupon.minOrderAmount,
           'description': coupon.description,
+          'usage_limit': coupon.usageLimit,
           'valid_from': coupon.validFrom,
           'valid_to': coupon.validTo,
         },
