@@ -487,6 +487,7 @@ class AppController extends ChangeNotifier {
     String? imageUrl,
     List<String>? imageFiles,
     String? description,
+    bool isActive = true,
   }) async {
     try {
       final response = await ProductService.createProduct(
@@ -497,6 +498,7 @@ class AppController extends ChangeNotifier {
         categoryId: categoryId,
         imageUrl: imageUrl,
         imageFiles: imageFiles,
+        isActive: isActive,
       );
 
       if (response.success) {
@@ -520,6 +522,7 @@ class AppController extends ChangeNotifier {
     String? imageUrl,
     List<String>? imageFiles,
     String? description,
+    bool isActive = true,
   }) async {
     try {
       final response = await ProductService.updateProduct(
@@ -531,6 +534,7 @@ class AppController extends ChangeNotifier {
         categoryId: categoryId,
         imageUrl: imageUrl,
         imageFiles: imageFiles,
+        isActive: isActive,
       );
 
       if (response.success) {

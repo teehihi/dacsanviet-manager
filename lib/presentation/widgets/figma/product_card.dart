@@ -52,7 +52,7 @@ class ProductCard extends StatelessWidget {
                       ? ClipRRect(
                           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                           child: Image.network(
-                            _formatImageUrl(data.imageUrl!),
+                            '${_formatImageUrl(data.imageUrl!)}?t=${DateTime.now().millisecondsSinceEpoch ~/ 60000}',
                             fit: BoxFit.cover,
                             width: double.infinity,
                             errorBuilder: (context, error, stackTrace) => const Center(child: Icon(Icons.image_outlined, size: 48, color: Color(0xFFE0E0E0))),

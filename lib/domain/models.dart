@@ -27,6 +27,8 @@ class Product {
     required this.stock,
     this.imageUrl,
     this.description,
+    this.images,
+    this.isActive = true,
   });
 
   final String id;
@@ -36,6 +38,8 @@ class Product {
   int stock;
   String? imageUrl;
   String? description;
+  List<Map<String, dynamic>>? images;
+  bool isActive;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     String? rawUrl = json['image_url']?.toString() ?? json['imageUrl']?.toString();
@@ -46,6 +50,11 @@ class Product {
       rawUrl = '$baseUrl$separator$rawUrl';
     }
 
+    List<Map<String, dynamic>>? images;
+    if (json['images'] is List) {
+      images = (json['images'] as List).map((img) => Map<String, dynamic>.from(img)).toList();
+    }
+
     return Product(
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
@@ -54,6 +63,8 @@ class Product {
       stock: int.tryParse(json['stock_quantity']?.toString() ?? json['stock']?.toString() ?? '0') ?? 0,
       imageUrl: rawUrl,
       description: json['description']?.toString(),
+      images: images,
+      isActive: json['is_active'] == 1 || json['is_active'] == true,
     );
   }
 }

@@ -53,8 +53,9 @@ class ProductService {
     required int stock,
     String? categoryId,
     String? imageUrl,
-    List<String>? imageFiles, // Multiple image files
+    List<String>? imageFiles,
     double? discount,
+    bool isActive = true,
   }) async {
     if (imageFiles != null && imageFiles.isNotEmpty) {
       return await ApiService.multipartRequest<Map<String, dynamic>>(
@@ -66,12 +67,12 @@ class ProductService {
           'price': price.toInt().toString(),
           'stock_quantity': stock.toString(),
           if (categoryId != null) 'category_id': categoryId,
+          'is_active': isActive ? '1' : '0',
         },
-        files: {'images': imageFiles}, // Pass list of file paths
+        files: {'images': imageFiles},
         fromJson: (data) => data as Map<String, dynamic>,
       );
     }
-
     return await ApiService.post<Map<String, dynamic>>(
       ApiConfig.adminProducts,
       body: {
@@ -81,6 +82,7 @@ class ProductService {
         'stock_quantity': stock,
         if (categoryId != null) 'category_id': categoryId,
         if (imageUrl != null) 'image_url': imageUrl,
+        'is_active': isActive ? 1 : 0,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );
@@ -95,7 +97,8 @@ class ProductService {
     int? stock,
     String? categoryId,
     String? imageUrl,
-    List<String>? imageFiles, // Multiple image files
+    List<String>? imageFiles,
+    bool? isActive,
   }) async {
     if (imageFiles != null && imageFiles.isNotEmpty) {
       return await ApiService.multipartRequest<Map<String, dynamic>>(
@@ -103,16 +106,16 @@ class ProductService {
         method: 'PUT',
         fields: {
           if (name != null) 'name': name,
-          if (description != null) 'description': description ?? (name ?? ''),
+          if (description != null) 'description': description,
           if (price != null) 'price': price.toInt().toString(),
           if (stock != null) 'stock_quantity': stock.toString(),
           if (categoryId != null) 'category_id': categoryId,
+          if (isActive != null) 'is_active': isActive ? '1' : '0',
         },
-        files: {'images': imageFiles}, // Pass list of file paths
+        files: {'images': imageFiles},
         fromJson: (data) => data as Map<String, dynamic>,
       );
     }
-
     return await ApiService.put<Map<String, dynamic>>(
       '${ApiConfig.adminProducts}/$id',
       body: {
@@ -122,6 +125,7 @@ class ProductService {
         if (stock != null) 'stock_quantity': stock,
         if (categoryId != null) 'category_id': categoryId,
         if (imageUrl != null) 'image_url': imageUrl,
+        if (isActive != null) 'is_active': isActive ? 1 : 0,
       },
       fromJson: (data) => data as Map<String, dynamic>,
     );

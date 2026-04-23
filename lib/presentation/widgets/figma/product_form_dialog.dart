@@ -18,6 +18,7 @@ class ProductFormDialog extends StatefulWidget {
     String? imageUrl,
     List<String>? imageFiles,
     String? description,
+    bool isActive,
   )
   onSaved;
 
@@ -41,40 +42,56 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   String? selectedCategoryId;
   late TextEditingController imageUrlController;
 
+  // Ảnh hiện có từ server (khi edit)
+  List<Map<String, dynamic>> _existingImages = [];
+  // Ảnh mới chọn từ thiết bị
   List<File> _selectedImages = [];
+  // Index ảnh chính: nếu >= 0 là index trong _existingImages, nếu < 0 là -(index+1) trong _selectedImages
+  int _primaryIndex = 0; // 0 = first existing, hoặc first new
+  bool _primaryIsNew = false; // true nếu ảnh chính là ảnh mới
+  bool _isActive = true;
+
   bool _isUploading = false;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    nameController = TextEditingController(
-      text: widget.initialData?['name'] ?? '',
-    );
-    priceController = TextEditingController(
-      text: widget.initialData?['price']?.toString() ?? '',
-    );
-    stockController = TextEditingController(
-      text: widget.initialData?['stock']?.toString() ?? '',
-    );
-    imageUrlController = TextEditingController(
-      text: widget.initialData?['imageUrl'] ?? '',
-    );
-    descriptionController = TextEditingController(
-      text: widget.initialData?['description'] ?? '',
-    );
+    nameController = TextEditingController(text: widget.initialData?['name'] ?? '');
+    priceController = TextEditingController(text: widget.initialData?['price']?.toString() ?? '');
+    stockController = TextEditingController(text: widget.initialData?['stock']?.toString() ?? '');
+    imageUrlController = TextEditingController(text: widget.initialData?['imageUrl'] ?? '');
+    descriptionController = TextEditingController(text: widget.initialData?['description'] ?? '');
 
-    // Try to find category ID from initial name or ID
+    // Load is_active
+    final activeVal = widget.initialData?['isActive'];
+    _isActive = activeVal == null ? true : (activeVal == true || activeVal == 1);
+
+    // Load existing images
+    final rawImages = widget.initialData?['images'];
+    if (rawImages is List) {
+      _existingImages = rawImages.map((img) {
+        final m = Map<String, dynamic>.from(img as Map);
+        // Resolve URL
+        String url = m['image_url']?.toString() ?? '';
+        if (url.isNotEmpty && !url.startsWith('http')) {
+          url = '${ApiConfig.baseUrl}${url.startsWith("/") ? "" : "/"}$url';
+        }
+        m['_resolved_url'] = url;
+        return m;
+      }).toList();
+      // Tìm ảnh chính hiện tại
+      final primaryIdx = _existingImages.indexWhere((img) => img['is_primary'] == 1 || img['is_primary'] == true);
+      _primaryIndex = primaryIdx >= 0 ? primaryIdx : 0;
+      _primaryIsNew = false;
+    }
+
     if (widget.isEdit && widget.initialData?['category'] != null) {
       final initialCatName = widget.initialData?['category'];
       try {
-        selectedCategoryId = widget.categories
-            .firstWhere((c) => c.name == initialCatName)
-            .id;
+        selectedCategoryId = widget.categories.firstWhere((c) => c.name == initialCatName).id;
       } catch (_) {
-        if (widget.categories.isNotEmpty) {
-          selectedCategoryId = widget.categories.first.id;
-        }
+        if (widget.categories.isNotEmpty) selectedCategoryId = widget.categories.first.id;
       }
     } else if (widget.categories.isNotEmpty) {
       selectedCategoryId = widget.categories.first.id;
@@ -85,7 +102,6 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   void dispose() {
     nameController.dispose();
     priceController.dispose();
-    stockController.dispose();
     stockController.dispose();
     descriptionController.dispose();
     imageUrlController.dispose();
@@ -180,6 +196,26 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                 controller: descriptionController,
                 hint: 'Nhập mô tả sản phẩm...',
                 maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              // Toggle is_active
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9F9F9),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Hiển thị sản phẩm', style: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600, color: UiPalette.textDark)),
+                    Switch(
+                      value: _isActive,
+                      onChanged: (v) => setState(() => _isActive = v),
+                      activeColor: UiPalette.primary,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               _buildLabel('Hình ảnh sản phẩm'),
@@ -304,186 +340,175 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         maxHeight: 1024,
         imageQuality: 80,
       );
-
       if (images.isNotEmpty) {
         setState(() {
-          // Append new images to existing list instead of replacing
-          _selectedImages.addAll(images.map((xfile) => File(xfile.path)));
-          // Limit to 5 images max
-          if (_selectedImages.length > 5) {
-            _selectedImages = _selectedImages.sublist(0, 5);
+          _selectedImages.addAll(images.map((x) => File(x.path)));
+          // Giới hạn tổng ảnh (existing + new) <= 5
+          final total = _existingImages.length + _selectedImages.length;
+          if (total > 5) {
+            _selectedImages = _selectedImages.sublist(0, _selectedImages.length - (total - 5));
+          }
+          // Nếu chưa có ảnh chính nào, set ảnh mới đầu tiên làm chính
+          if (_existingImages.isEmpty && !_primaryIsNew) {
+            _primaryIsNew = true;
+            _primaryIndex = 0;
           }
         });
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
     }
   }
 
   Widget _buildImagePicker() {
-    if (_selectedImages.isNotEmpty) {
-      return Column(
-        children: [
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: _selectedImages.length + 1,
-            itemBuilder: (context, index) {
-              if (index == _selectedImages.length) {
-                // Add more button
-                return GestureDetector(
-                  onTap: _pickImage,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9F9F9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFFE0E0E0),
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.add_photo_alternate_outlined,
-                      color: UiPalette.primary,
-                      size: 32,
-                    ),
-                  ),
-                );
-              }
+    final totalImages = _existingImages.length + _selectedImages.length;
 
-              return Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE0E0E0)),
-                      image: DecorationImage(
-                        image: FileImage(_selectedImages[index]),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedImages.removeAt(index);
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (index == 0)
-                    Positioned(
-                      bottom: 4,
-                      left: 4,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: UiPalette.primary,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Chính',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      );
-    }
-
-    // Show existing images if editing
-    if (widget.isEdit && imageUrlController.text.isNotEmpty) {
+    if (totalImages == 0) {
       return GestureDetector(
         onTap: _pickImage,
         child: Container(
           height: 140,
           width: double.infinity,
           decoration: BoxDecoration(
+            color: const Color(0xFFF9F9F9),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE0E0E0)),
-            image: DecorationImage(
-              image: NetworkImage(
-                _formatImageUrl(imageUrlController.text),
-              ),
-              fit: BoxFit.cover,
-            ),
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              color: Colors.black.withValues(alpha: 0.2),
-            ),
-            child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.cloud_upload_outlined, color: UiPalette.primary, size: 32),
+              const SizedBox(height: 12),
+              Text('Tải ảnh lên (tối đa 5)', style: GoogleFonts.dmSans(fontSize: 14, fontWeight: FontWeight.w700, color: UiPalette.textDark)),
+              const SizedBox(height: 4),
+              Text('Nhấn để chọn nhiều ảnh', style: GoogleFonts.dmSans(fontSize: 12, color: const Color(0xFFAAAAAA))),
+            ],
           ),
         ),
       );
     }
 
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        height: 140,
-        width: double.infinity,
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9F9F9),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE0E0E0),
-            style: BorderStyle.solid,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Nhấn vào ảnh để đặt làm ảnh chính', style: GoogleFonts.dmSans(fontSize: 12, color: const Color(0xFF888888))),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.cloud_upload_outlined,
-              color: UiPalette.primary,
-              size: 32,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Tải ảnh lên (tối đa 5)',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: UiPalette.textDark,
+          itemCount: totalImages + (totalImages < 5 ? 1 : 0),
+          itemBuilder: (context, index) {
+            // Nút thêm ảnh
+            if (index == totalImages) {
+              return GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9F9F9),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE0E0E0)),
+                  ),
+                  child: const Icon(Icons.add_photo_alternate_outlined, color: UiPalette.primary, size: 32),
+                ),
+              );
+            }
+
+            final isExisting = index < _existingImages.length;
+            final isPrimary = isExisting
+                ? (!_primaryIsNew && _primaryIndex == index)
+                : (_primaryIsNew && _primaryIndex == index - _existingImages.length);
+
+            Widget imageWidget;
+            if (isExisting) {
+              imageWidget = Image.network(
+                _existingImages[index]['_resolved_url'] ?? '',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey),
+              );
+            } else {
+              imageWidget = Image.file(
+                _selectedImages[index - _existingImages.length],
+                fit: BoxFit.cover,
+              );
+            }
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isExisting) {
+                    _primaryIsNew = false;
+                    _primaryIndex = index;
+                  } else {
+                    _primaryIsNew = true;
+                    _primaryIndex = index - _existingImages.length;
+                  }
+                });
+              },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: imageWidget,
+                  ),
+                  // Border ảnh chính
+                  if (isPrimary)
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: UiPalette.primary, width: 3),
+                      ),
+                    ),
+                  // Badge ảnh chính
+                  if (isPrimary)
+                    Positioned(
+                      bottom: 4, left: 4,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(color: UiPalette.primary, borderRadius: BorderRadius.circular(4)),
+                        child: Text('Chính', style: GoogleFonts.dmSans(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                      ),
+                    ),
+                  // Nút xóa
+                  Positioned(
+                    top: 4, right: 4,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (isExisting) {
+                            _existingImages.removeAt(index);
+                            if (!_primaryIsNew && _primaryIndex >= _existingImages.length) {
+                              _primaryIndex = _existingImages.isNotEmpty ? 0 : 0;
+                              _primaryIsNew = _existingImages.isEmpty && _selectedImages.isNotEmpty;
+                            }
+                          } else {
+                            final newIdx = index - _existingImages.length;
+                            _selectedImages.removeAt(newIdx);
+                            if (_primaryIsNew && _primaryIndex >= _selectedImages.length) {
+                              _primaryIndex = _selectedImages.isNotEmpty ? 0 : 0;
+                              _primaryIsNew = _selectedImages.isNotEmpty;
+                            }
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 
@@ -534,12 +559,17 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     final name = nameController.text.trim();
     final price = int.tryParse(priceController.text) ?? 0;
     final stock = int.tryParse(stockController.text) ?? 0;
-    final imageUrl = imageUrlController.text.trim().isEmpty
-        ? null
-        : imageUrlController.text.trim();
-    final description = descriptionController.text.trim().isEmpty
-        ? null
-        : descriptionController.text.trim();
+    final description = descriptionController.text.trim().isEmpty ? null : descriptionController.text.trim();
+
+    // Xác định imageUrl từ ảnh chính
+    String? imageUrl;
+    if (!_primaryIsNew && _existingImages.isNotEmpty) {
+      // Ưu tiên lấy path gốc (image_url), fallback về resolved URL
+      final rawUrl = _existingImages[_primaryIndex]['image_url']?.toString();
+      final resolvedUrl = _existingImages[_primaryIndex]['_resolved_url']?.toString();
+      imageUrl = rawUrl?.isNotEmpty == true ? rawUrl : resolvedUrl;
+      debugPrint('🖼️ Primary image URL: $imageUrl (raw: $rawUrl)');
+    }
 
     if (name.isNotEmpty && selectedCategoryId != null) {
       widget.onSaved(
@@ -550,6 +580,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         imageUrl,
         _selectedImages.isNotEmpty ? _selectedImages.map((f) => f.path).toList() : null,
         description,
+        _isActive,
       );
       Navigator.pop(context);
     }
