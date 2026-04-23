@@ -46,6 +46,8 @@ dependencies:
   firebase_messaging: ^15.0.0
   intl: ^0.20.2
   fl_chart: ^0.70.2
+  flutter_markdown: ^0.7.7
+  audioplayers: ^6.1.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +75,7 @@ flutter:
   assets:
     - assets/figma/
     - assets/shipping_logos/
+    - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

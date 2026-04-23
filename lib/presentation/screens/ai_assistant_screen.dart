@@ -1,5 +1,8 @@
 import 'dart:ui';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../state/app_controller.dart';
 import '../theme/ui_palette.dart';
@@ -27,14 +30,82 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
 
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
+
   @override
   void initState() {
     super.initState();
+    _initNotifications();
+    _initAudio();
     _messages.add(ChatMessage(
       text: "Xin chào! Tôi là trợ lý AI của Đặc Sản Việt. Tôi có thể giúp bạn phân tích doanh thu, xu hướng mua hàng và đề xuất chiến lược kinh doanh. Bạn muốn biết gì hôm nay?",
       isUser: false,
       timestamp: DateTime.now(),
     ));
+  }
+
+  Future<void> _initNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+    await _notificationsPlugin.initialize(
+      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+    );
+  }
+
+  Future<void> _initAudio() async {
+    // iOS cần set audio context để phát sound kể cả khi silent mode
+    await _audioPlayer.setAudioContext(
+      const AudioContext(
+        iOS: AudioContextIOS(
+          category: AVAudioSessionCategory.playback,
+          options: {AVAudioSessionOptions.mixWithOthers},
+        ),
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: false,
+          stayAwake: false,
+          contentType: AndroidContentType.sonification,
+          usageType: AndroidUsageType.notificationEvent,
+          audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _playSentSound() async {
+    await _audioPlayer.play(AssetSource('sounds/message_sent.wav'));
+  }
+
+  Future<void> _playReceivedSound() async {
+    await _audioPlayer.play(AssetSource('sounds/message_received.wav'));
+  }
+
+  Future<void> _showNewMessageNotification(String preview) async {
+    const androidDetails = AndroidNotificationDetails(
+      'ai_chat_channel',
+      'Đặc Sản Việt Manager',
+      channelDescription: 'Thông báo từ trợ lý AI',
+      importance: Importance.high,
+      priority: Priority.high,
+      playSound: false,
+    );
+    const iosDetails = DarwinNotificationDetails(presentSound: false);
+    await _notificationsPlugin.show(
+      0,
+      'Đặc Sản Việt Manager',
+      'Bạn có tin nhắn mới từ DacSanVietAI',
+      const NotificationDetails(android: androidDetails, iOS: iosDetails),
+    );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
   }
 
   void _handleSend() async {
@@ -44,7 +115,10 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
     _textController.clear();
 
     // Convert current messages to Gemini history format
-    List<Map<String, dynamic>> chatHistory = _messages.map((msg) {
+    // Skip the first greeting message (role: model) to avoid Gemini API error:
+    // "First content should be with role 'user', got model"
+    final historyMessages = _messages.length > 1 ? _messages.sublist(1) : <ChatMessage>[];
+    List<Map<String, dynamic>> chatHistory = historyMessages.map((msg) {
       return {
         'role': msg.isUser ? 'user' : 'model',
         'parts': [
@@ -62,6 +136,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       _isTyping = true;
     });
 
+    _playSentSound();
     _scrollToBottom();
 
     // Call Real AI Backend with history
@@ -76,6 +151,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           timestamp: DateTime.now(),
         ));
       });
+      _playReceivedSound();
+      _showNewMessageNotification(response);
       _scrollToBottom();
     }
   }
@@ -203,46 +280,44 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ],
         ),
-        child: Text(
-          msg.text,
-          style: GoogleFonts.dmSans(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-            color: msg.isUser ? Colors.white : UiPalette.textDark,
-            height: 1.4,
-          ),
-        ),
+        child: msg.isUser
+            ? Text(
+                msg.text,
+                style: GoogleFonts.dmSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  height: 1.4,
+                ),
+              )
+            : MarkdownBody(
+                data: msg.text,
+                styleSheet: MarkdownStyleSheet(
+                  p: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: UiPalette.textDark,
+                    height: 1.4,
+                  ),
+                  strong: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: UiPalette.textDark,
+                  ),
+                  listBullet: GoogleFonts.dmSans(
+                    fontSize: 15,
+                    color: UiPalette.textDark,
+                  ),
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildTypingIndicator() {
-    return Align(
+    return const Align(
       alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDot(0),
-            _buildDot(1),
-            _buildDot(2),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDot(int index) {
-    return Container(
-      width: 6,
-      height: 6,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      decoration: const BoxDecoration(color: UiPalette.primary, shape: BoxShape.circle),
+      child: _TypingIndicator(),
     );
   }
 
@@ -327,6 +402,97 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Typing indicator với staggered bounce animation cho từng dot
+class _TypingIndicator extends StatefulWidget {
+  const _TypingIndicator();
+
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(3, (i) {
+      return AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      );
+    });
+
+    _animations = _controllers.map((c) {
+      return Tween<double>(begin: 0, end: -8).animate(
+        CurvedAnimation(parent: c, curve: Curves.easeInOut),
+      );
+    }).toList();
+
+    _startAnimation();
+  }
+
+  void _startAnimation() async {
+    while (mounted) {
+      for (int i = 0; i < 3; i++) {
+        if (!mounted) return;
+        _controllers[i].forward().then((_) => _controllers[i].reverse());
+        await Future.delayed(const Duration(milliseconds: 150));
+      }
+      await Future.delayed(const Duration(milliseconds: 400));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(3, (i) {
+          return AnimatedBuilder(
+            animation: _animations[i],
+            builder: (_, __) => Transform.translate(
+              offset: Offset(0, _animations[i].value),
+              child: Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: const BoxDecoration(
+                  color: UiPalette.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
