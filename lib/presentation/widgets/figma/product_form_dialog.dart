@@ -17,6 +17,7 @@ class ProductFormDialog extends StatefulWidget {
     int stock,
     String? imageUrl,
     List<String>? imageFiles,
+    String? description,
   )
   onSaved;
 
@@ -36,6 +37,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   late TextEditingController nameController;
   late TextEditingController priceController;
   late TextEditingController stockController;
+  late TextEditingController descriptionController;
   String? selectedCategoryId;
   late TextEditingController imageUrlController;
 
@@ -57,6 +59,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     );
     imageUrlController = TextEditingController(
       text: widget.initialData?['imageUrl'] ?? '',
+    );
+    descriptionController = TextEditingController(
+      text: widget.initialData?['description'] ?? '',
     );
 
     // Try to find category ID from initial name or ID
@@ -81,6 +86,8 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     nameController.dispose();
     priceController.dispose();
     stockController.dispose();
+    stockController.dispose();
+    descriptionController.dispose();
     imageUrlController.dispose();
     super.dispose();
   }
@@ -168,16 +175,16 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
               _buildLabel('Danh mục'),
               _buildCategoryDropdown(),
               const SizedBox(height: 16),
+              _buildLabel('Mô tả sản phẩm'),
+              _buildTextField(
+                controller: descriptionController,
+                hint: 'Nhập mô tả sản phẩm...',
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
               _buildLabel('Hình ảnh sản phẩm'),
               const SizedBox(height: 8),
               _buildImagePicker(),
-              const SizedBox(height: 16),
-              _buildDividerWithText('HOẶC NHẬP LINK'),
-              const SizedBox(height: 16),
-              _buildTextField(
-                controller: imageUrlController,
-                hint: 'https://...',
-              ),
               const SizedBox(height: 32),
               Row(
                 children: [
@@ -257,6 +264,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    int maxLines = 1,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -266,6 +274,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        maxLines: maxLines,
         style: GoogleFonts.dmSans(
           fontSize: 15,
           fontWeight: FontWeight.w500,
@@ -528,6 +537,9 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     final imageUrl = imageUrlController.text.trim().isEmpty
         ? null
         : imageUrlController.text.trim();
+    final description = descriptionController.text.trim().isEmpty
+        ? null
+        : descriptionController.text.trim();
 
     if (name.isNotEmpty && selectedCategoryId != null) {
       widget.onSaved(
@@ -537,6 +549,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
         stock,
         imageUrl,
         _selectedImages.isNotEmpty ? _selectedImages.map((f) => f.path).toList() : null,
+        description,
       );
       Navigator.pop(context);
     }

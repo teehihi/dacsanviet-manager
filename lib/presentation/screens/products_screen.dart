@@ -76,6 +76,7 @@ class FigmaProductsScreen extends StatelessWidget {
                                             'stock': p.stock,
                                             'category': p.category,
                                             'imageUrl': p.imageUrl,
+                                            'description': p.description,
                                           },
                                           onSaved:
                                               (
@@ -85,6 +86,7 @@ class FigmaProductsScreen extends StatelessWidget {
                                                 stock,
                                                 imageUrl,
                                                 imageFiles,
+                                                description,
                                               ) {
                                                 controller.updateProduct(
                                                   p.id,
@@ -94,6 +96,7 @@ class FigmaProductsScreen extends StatelessWidget {
                                                   stock: stock,
                                                   imageUrl: imageUrl,
                                                   imageFiles: imageFiles,
+                                                  description: description,
                                                 );
                                               },
                                         ),
@@ -197,7 +200,7 @@ class FigmaProductsScreen extends StatelessWidget {
                   builder: (ctx) => ProductFormDialog(
                     categories: controller.categories.cast<Category>(),
                     onSaved:
-                        (name, categoryId, price, stock, imageUrl, imageFiles) {
+                        (name, categoryId, price, stock, imageUrl, imageFiles, description) {
                           controller.addProduct(
                             name: name,
                             categoryId: categoryId,
@@ -205,6 +208,7 @@ class FigmaProductsScreen extends StatelessWidget {
                             stock: stock,
                             imageUrl: imageUrl,
                             imageFiles: imageFiles,
+                            description: description,
                           );
                         },
                   ),

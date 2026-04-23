@@ -26,6 +26,7 @@ class Product {
     required this.price,
     required this.stock,
     this.imageUrl,
+    this.description,
   });
 
   final String id;
@@ -34,11 +35,11 @@ class Product {
   int price;
   int stock;
   String? imageUrl;
+  String? description;
 
   factory Product.fromJson(Map<String, dynamic> json) {
     String? rawUrl = json['image_url']?.toString() ?? json['imageUrl']?.toString();
     
-    // Resolve relative URL
     if (rawUrl != null && !rawUrl.startsWith('http')) {
       final baseUrl = ApiConfig.baseUrl;
       final separator = (baseUrl.endsWith('/') || rawUrl.startsWith('/')) ? '' : '/';
@@ -49,9 +50,10 @@ class Product {
       id: json['id']?.toString() ?? '',
       name: json['name'] ?? '',
       category: json['category_name'] ?? json['category'] ?? '',
-      price: int.tryParse(json['price']?.toString() ?? '0') ?? 0,
+      price: (double.tryParse(json['price']?.toString() ?? '0') ?? 0).round(),
       stock: int.tryParse(json['stock_quantity']?.toString() ?? json['stock']?.toString() ?? '0') ?? 0,
       imageUrl: rawUrl,
+      description: json['description']?.toString(),
     );
   }
 }

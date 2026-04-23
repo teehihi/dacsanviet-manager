@@ -486,11 +486,12 @@ class AppController extends ChangeNotifier {
     required int stock,
     String? imageUrl,
     List<String>? imageFiles,
+    String? description,
   }) async {
     try {
       final response = await ProductService.createProduct(
         name: name,
-        description: name,
+        description: description ?? name,
         price: price.toDouble(),
         stock: stock,
         categoryId: categoryId,
@@ -518,11 +519,13 @@ class AppController extends ChangeNotifier {
     required int stock,
     String? imageUrl,
     List<String>? imageFiles,
+    String? description,
   }) async {
     try {
       final response = await ProductService.updateProduct(
         id: int.parse(id),
         name: name,
+        description: description,
         price: price.toDouble(),
         stock: stock,
         categoryId: categoryId,

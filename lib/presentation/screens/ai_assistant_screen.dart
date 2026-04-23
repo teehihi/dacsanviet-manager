@@ -60,7 +60,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   Future<void> _initAudio() async {
     // iOS cần set audio context để phát sound kể cả khi silent mode
     await _audioPlayer.setAudioContext(
-      const AudioContext(
+      AudioContext(
         iOS: AudioContextIOS(
           category: AVAudioSessionCategory.playback,
           options: {AVAudioSessionOptions.mixWithOthers},
