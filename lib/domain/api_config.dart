@@ -4,11 +4,11 @@ class ApiConfig {
   // For Android Emulator: use 10.0.2.2 instead of localhost
   // For iOS Simulator: use localhost
   // For Real Device: use your computer's IP address (e.g., 192.168.1.100)
-  static const String baseUrl = 'http://10.0.2.2:3001';
+  static const String baseUrl = 'http://192.168.110.2:3001';
 
   // Alternative URLs (uncomment the one you need):
+  // static const String baseUrl = 'http://10.0.2.2:3001'; // Android Emulator
   // static const String baseUrl = 'http://localhost:3001'; // iOS Simulator
-  // static const String baseUrl = 'http://192.168.1.100:3001'; // Real Device
 
   // API Endpoints
   static const String apiPrefix = '/api';
